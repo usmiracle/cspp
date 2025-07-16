@@ -19,6 +19,7 @@ class Send:
         self.path = None  # The argument to To()
         self.evaluated_path = None  # The evaluated path using the environment
         self.raw_text = None  # Store the raw text for debugging
+        self.line_number = node.start_point[0] + 1  # 1-based line number
         # Parse the Send function
         self._parse_send_function()
     
@@ -27,7 +28,7 @@ class Send:
         try:
             # Get the text of the Send function call
             self.raw_text = self.source_bytes[self.node.start_byte:self.node.end_byte].decode()
-            print(f"Debug: Parsing Send function: {self.raw_text}")
+            print(f"Debug: Parsing Send function: {self.raw_text} (line {self.line_number})")
             
             # Extract the argument inside Send(...)
             # Match Send(...) and extract the inner content
@@ -100,6 +101,9 @@ class Send:
     def get_evaluated_path(self) -> Optional[str]:
         """Get the evaluated path argument from To()"""
         return self.evaluated_path
+    def get_line_number(self) -> int:
+        """Get the 1-based line number where the Send call appears."""
+        return self.line_number
     
     def get_raw_text(self) -> Optional[str]:
         """Get the raw text of the Send function call"""
@@ -111,9 +115,9 @@ class Send:
     
     def __str__(self):
         if self.is_valid():
-            return f"Send({self.request_type} -> {self.path} | evaluated: {self.evaluated_path})"
+            return f"Send({self.request_type} -> {self.path} | evaluated: {self.evaluated_path} | line: {self.line_number})"
         else:
-            return f"Send(INVALID -> {self.raw_text})"
+            return f"Send(INVALID -> {self.raw_text} | line: {self.line_number})"
     
     def __repr__(self):
-        return f"Send(request_type='{self.request_type}', path='{self.path}', evaluated_path='{self.evaluated_path}', raw_text='{self.raw_text}')" 
+        return f"Send(request_type='{self.request_type}', path='{self.path}', evaluated_path='{self.evaluated_path}', line={self.line_number}, raw_text='{self.raw_text}')" 
