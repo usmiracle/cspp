@@ -24,27 +24,42 @@ class Send:
         self._parse_send_function()
     
     def _parse_send_function(self):
-        """Parse the Send function to extract REQUEST_TYPE and PATH"""
+        """Parse the Send function to extract REQUEST_TYPE and PATH, handling 'with { ... }' blocks."""
         try:
             # Get the text of the Send function call
             self.raw_text = self.source_bytes[self.node.start_byte:self.node.end_byte].decode()
             print(f"Debug: Parsing Send function: {self.raw_text} (line {self.line_number})")
             
+            # Remove any trailing 'with { ... }' block for parsing
+            # This will not remove nested braces, but works for simple cases
+            cleaned_text = re.sub(r'with\s*\{[^}]*\}\s*;?$', '', self.raw_text, flags=re.DOTALL).strip()
+            if cleaned_text != self.raw_text:
+                print(f"Debug: Found 'with' block, cleaned text for parsing: {cleaned_text}")
+            else:
+                print(f"Debug: No 'with' block found.")
+            
             # Extract the argument inside Send(...)
-            # Match Send(...) and extract the inner content
-            send_match = re.match(r'Send\s*\(\s*(.+)\s*\)', self.raw_text, re.DOTALL)
+            send_match = re.match(r'Send\s*\(\s*(.+)\s*\)', cleaned_text, re.DOTALL)
             if not send_match:
-                print(f"Debug: Could not parse Send function: {self.raw_text}")
+                print(f"Debug: Could not parse Send function: {cleaned_text}")
                 return
             
             inner_content = send_match.group(1).strip()
-            print(f"Debug: Inner content: {inner_content}")
+            # Remove any trailing 'with { ... }' block from the inner_content
+            cleaned_inner_content = re.sub(r'with\s*\{[^}]*\}\s*$', '', inner_content, flags=re.DOTALL).strip()
+            if cleaned_inner_content != inner_content:
+                print(f"Debug: Cleaned inner_content for parsing: {cleaned_inner_content}")
+            else:
+                print(f"Debug: No 'with' block in inner_content.")
+            print(f"Debug: Inner content: {cleaned_inner_content}")
             
-            # Parse the request type (Post/Put/Get)
-            self._parse_request_type(inner_content)
-            
-            # Parse the path from To()
-            self._parse_path(inner_content)
+            # Try new style first: Get(path), Post(obj).To(path), etc.
+            if self._parse_new_style(cleaned_inner_content):
+                print(f"Debug: Parsed using new style: {self.request_type}, {self.path}")
+            else:
+                # Fallback to old style
+                self._parse_request_type(cleaned_inner_content)
+                self._parse_path(cleaned_inner_content)
             # Evaluate the path if possible
             if self.path and self.environment is not None:
                 try:
@@ -59,6 +74,44 @@ class Send:
                     self.evaluated_path = self.path
         except Exception as e:
             print(f"Debug: Error parsing Send function: {e}")
+
+    def _parse_new_style(self, content: str) -> bool:
+        """Try to parse new style: Get(path), Post(obj).To(path), etc. Returns True if successful."""
+        try:
+            # Match Get(path) or Post(obj), Patch(data), etc. (no .To)
+            # Also handle generic types: Send<List<string>>(Patch(...))
+            # Try to match: METHOD_NAME(<args>)
+            method_match = re.match(r'(Get|Delete|Patch|Put|Post)\s*<[^>]+>\s*\\?\((.+)\)|'  # generic
+                                   r'(Get|Delete|Patch|Put|Post)\s*\((.+)\)', content, re.IGNORECASE | re.DOTALL)
+            if method_match:
+                if method_match.group(1):
+                    # Generic type
+                    self.request_type = method_match.group(1).upper()
+                    arg = method_match.group(2)
+                else:
+                    self.request_type = method_match.group(3).upper()
+                    arg = method_match.group(4)
+                # Remove any trailing 'with { ... }' block from the argument
+                cleaned_arg = re.sub(r'with\s*\{[^}]*\}\s*$', '', arg, flags=re.DOTALL).strip()
+                if cleaned_arg != arg:
+                    print(f"Debug: Cleaned path argument for {self.request_type}: {cleaned_arg}")
+                # For Get(path), path is the argument
+                if self.request_type == 'GET':
+                    self.path = cleaned_arg
+                    return True
+                # For Delete(path), Patch(data), etc., check if .To(path) is present
+                # If .To(path) is present, use old style
+                if re.search(r'\\.To\\s*\\(', content):
+                    return False
+                # For Post(obj), Put(obj), Patch(data), etc., path may not be present directly
+                # But for new style, if argument looks like a path, use it
+                if self.request_type in ['DELETE', 'PATCH', 'PUT', 'POST']:
+                    self.path = cleaned_arg
+                    return True
+            return False
+        except Exception as e:
+            print(f"Debug: Error parsing new style: {e}")
+            return False
     
     def _parse_request_type(self, content: str):
         """Extract the request type (Post/Put/Get) from the content"""

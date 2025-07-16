@@ -92,7 +92,6 @@ class CSFile:
                                 # private string yet_another_name = "another" + "name"; // this should be evaluated to get anothername
                                 # private string yet_another_name_name = $"another{name}"; // this should be evaluated to get anothername
                                 
-                                # for now, store them as is
                                 var_value = Interpreter.evaluate(item, value_text, self.environment)
                         if var_name:
                             # Store the variable in the environment
@@ -531,10 +530,17 @@ public sealed class Admin_Share_Recipients : APITest
     public void Test_Multiple_HTTP_Methods()
     {
         // Test GET request
-        Send(Get().To("api/users"));
+        // Send(Get().To("api/users")); // old way to do it
+        Send(Get("api/users") with {
+            Authorization = Bearer(admin.AccessToken)
+        }); // new way to do it
         
-        // Test PUT request
-        Send(Put(userData).To("api/users/123"));
+        // Test POST request
+        Send(Post(userData with {
+            UserId = 123
+        }).To("api/users/123") with {
+            Authorization = Bearer(admin.AccessToken)
+        });
         
         // Test DELETE request
         Send(Delete().To("api/users/456"));
@@ -551,24 +557,32 @@ public sealed class Admin_Share_Recipients : APITest
         [Test]
         public void Test_Multiple_HTTP_Methods()
         {
-            var startpath = "api/users";
-            var path = "api/users";
+            var startpath = "/api/users";
+            var path = "/api/users";
 
             // Test GET request
-            Send(Get().To(path)); // this should be evaluated to get api/users/api/users
-        
-            // Test PUT request
-            Send(Put(userData).To($"{startpath}/123")); // this should be evaluated to get api/users/api/users/123
-        
+            Send(Get(path)); // path should be evaluated to get /api/users
+            Send(Get(path) with {
+                Authorization = Bearer(admin.AccessToken) // path should be evaluated to get /api/users
+            }); // new way
+
+            // Test Post request
+            Send(Post(userData).To($"{startpath}/123") with {
+                Authorization = Bearer(admin.AccessToken)
+            }); // this should be evaluated to get /api/users/api/users/123
+
             // Test DELETE request
-            Send(Delete().To(startpath + path)); // this should be evaluated to get api/users/api/users
-        
+            Send(Delete().To(startpath + path)
+                with {
+                    Authorization = Bearer(admin.AccessToken)
+                }
+            ); // this should be evaluated to get api/users/api/users
+
             // Test PATCH request
-            Send(Patch(updateData).To("api/users/789")); // this should be evaluated to get api/users/789
+            Send<List<string>>(Patch(updateData).To("api/users/789")); // this should be evaluated to get api/users/789
         }
     }
     """
-
     environment = Environment(env)
     cs = CSFile(small_test_code, environment)
     
@@ -589,6 +603,8 @@ public sealed class Admin_Share_Recipients : APITest
             if isinstance(method, CSMethod):
                 print(f"    {method_name}: {method.attributes}")
                 print(f"      Method variables: {method.get_method_environment().values}")
-                print(f"      Send functions: {method.send_functions}")
+                print(f"      Send functions:")
+                for send_func in method.send_functions:
+                    print(f"        {send_func}")
             else:
                 print(f"    {method_name}: []")
