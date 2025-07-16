@@ -5,6 +5,7 @@ from Types import Callable
 from collections.abc import Iterator
 from tree_sitter import Language, Parser, Tree, Node
 from Environment import Environment
+from special_nodes import Send
 
 
 class CSFile:
@@ -321,11 +322,14 @@ class CSMethod(Callable):
         self.environment = environment
         self.attributes = []  # Store method attributes
         self.method_environment = Environment(environment)  # Method-specific environment
+        self.send_functions = []  # Store Send function objects
         
         # Extract attributes
         self._extract_attributes()
         # Parse variables from statements
         self._parse_method_variables()
+        # Parse Send function calls
+        self._parse_send_functions()
     
     def _extract_attributes(self):
         """Extract attribute_list nodes from the method declaration"""
@@ -335,94 +339,105 @@ class CSMethod(Callable):
                 self.attributes.append(attr_text)
                 print(f"Debug: Found method attribute: {attr_text}")
     
-    def _parse_method_variables(self):
-        """Parse variable declarations from statements and store in method environment if evaluable."""
-        import re
-        for statement in self.iterate_statements():
-            # Match C# variable declaration: type name = value;
-            # e.g., int x = 5; string s = "hello";
-            match = re.match(r'^(?:var|[a-zA-Z_][a-zA-Z0-9_<>]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+);$', statement)
-            if match:
-                var_name = match.group(1)
-                var_value = match.group(2).strip()
-                # Skip if value looks like a function call or complex expression
-                if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*\(', var_value):
-                    continue
-                # Try to evaluate the value using Interpreter
-                try:
-                    evaluated = Interpreter.evaluate(None, var_value, self.method_environment)
-                    self.method_environment.define_variable(var_name, evaluated)
-                except Exception as e:
-                    continue
+    def _parse_send_functions(self):
+        """Parse Send function calls from statement nodes and create Send objects."""
+        for stmt_node in self.iterate_statements():
+            # Look for invocation_expression nodes that might be Send calls
+            self._find_send_calls_in_node(stmt_node)
     
-    def iterate_statements(self) -> Iterator[str]:
-        """Iterator that yields statements from the method body one at a time"""
+    def _find_send_calls_in_node(self, node: Node):
+        """Recursively search for Send function calls in a node and its children."""
+        # Check if this node is a Send call
+        if self._is_send_call(node):
+            try:
+                send_obj = Send(node, self.source, self.method_environment)
+                self.send_functions.append(send_obj)
+                print(f"Debug: Found Send function: {send_obj}")
+            except Exception as e:
+                print(f"Debug: Error parsing Send function: {e}")
+        
+        # Recursively check children
+        for child in node.children:
+            self._find_send_calls_in_node(child)
+    
+    def _is_send_call(self, node: Node) -> bool:
+        """Check if a node represents a Send function call."""
+        if node.type != "invocation_expression":
+            return False
+        
+        # Get the text of the node
+        node_text = self.source[node.start_byte:node.end_byte].decode()
+        
+        # Check if it starts with "Send("
+        return node_text.strip().startswith("Send(")
+    
+    def _parse_method_variables(self):
+        """Parse variable declarations from statement nodes and store in method environment if evaluable."""
+        for stmt_node in self.iterate_statements():
+            # Only process local_declaration_statement nodes
+            if stmt_node.type == "local_declaration_statement":
+                print(f"Debug: local_declaration_statement children: {[child.type for child in stmt_node.children]}")
+                for child in stmt_node.children:
+                    if child.type == "variable_declaration":
+                        print(f"Debug: variable_declaration children: {[c.type for c in child.children]}")
+                        var_type = None
+                        for decl_child in child.children:
+                            if decl_child.type == "predefined_type":
+                                var_type = self.source[decl_child.start_byte:decl_child.end_byte].decode().strip()
+                            elif decl_child.type == "implicit_type":
+                                var_type = self.source[decl_child.start_byte:decl_child.end_byte].decode().strip()
+                            elif decl_child.type == "variable_declarator":
+                                print(f"Debug: variable_declarator children: {[c.type for c in decl_child.children]}")
+                                var_name = None
+                                var_value = ""
+                                children = list(decl_child.children)
+                                i = 0
+                                while i < len(children):
+                                    item = children[i]
+                                    if item.type == "identifier":
+                                        var_name = self.source[item.start_byte:item.end_byte].decode()
+                                        i += 1
+                                    elif item.type == "=":
+                                        # The next child is the value node
+                                        if i + 1 < len(children):
+                                            value_node = children[i + 1]
+                                            value_text = self.source[value_node.start_byte:value_node.end_byte].decode().strip()
+                                            try:
+                                                evaluated = Interpreter.evaluate(value_node, value_text, self.method_environment)
+                                                var_value = evaluated
+                                            except Exception:
+                                                var_value = value_text
+                                            i += 2
+                                            continue
+                                        else:
+                                            i += 1
+                                    else:
+                                        i += 1
+                                if var_name and var_value:
+                                    self.method_environment.define_variable(var_name, var_value)
+        # Debug output: show what is stored in the method environment after parsing
+        print(f"Debug: Method environment after variable parsing: {self.method_environment.values}")
+
+    def iterate_statements(self) -> Iterator[Node]:
+        """
+        Iterator that yields statement nodes from the method body one at a time.
+        Each element is a node representing an entire statement.
+        """
         # Find the block node (method body)
         block_node = None
         for child in self.node.children:
             if child.type == "block":
                 block_node = child
                 break
-        
         if not block_node:
             return  # No method body found
-        
-        # Get the source text of the entire method
-        method_text = self.source[block_node.start_byte:block_node.end_byte].decode()
-        
-        # Remove the outer braces
-        method_text = method_text.strip()
-        if method_text.startswith('{') and method_text.endswith('}'):
-            method_text = method_text[1:-1].strip()
-        
-        # Split into lines and process each line
-        lines = method_text.split('\n')
-        current_statement = ""
-        brace_count = 0
-        in_string = False
-        string_char = None
-        
-        for line in lines:
-            line = line.strip()
-            
-            # Skip empty lines and comments
-            if not line or line.startswith('//') or line.startswith('/*'):
+        # In the C# grammar, statements are direct children of the block node
+        for child in block_node.children:
+            # Skip the opening and closing braces
+            if child.type == '{' or child.type == '}':
                 continue
-            
-            # Process each character in the line
-            for char in line:
-                # Handle string literals
-                if char in ['"', "'"] and not in_string:
-                    in_string = True
-                    string_char = char
-                elif char == string_char and in_string:
-                    in_string = False
-                    string_char = None
-                
-                # Only process braces and semicolons when not in a string
-                if not in_string:
-                    if char == '{':
-                        brace_count += 1
-                    elif char == '}':
-                        brace_count -= 1
-                    elif char == ';' and brace_count == 0:
-                        # End of statement
-                        current_statement += char
-                        statement = current_statement.strip()
-                        if statement:  # Don't yield empty statements
-                            yield statement
-                        current_statement = ""
-                        continue
-                
-                current_statement += char
-            
-            # Add newline if not at the end of a statement
-            if current_statement.strip():
-                current_statement += '\n'
-        
-        # Yield any remaining statement
-        if current_statement.strip():
-            yield current_statement.strip()
+            print(f"Debug: Statement node type: {child.type}, text: {self.source[child.start_byte:child.end_byte].decode().strip()}")
+            yield child
     
     def get_method_environment(self) -> Environment:
         """Get the method-specific environment containing variables"""
@@ -454,7 +469,7 @@ public sealed class Admin_Share_Recipients : APITest
 
     [Test]
     [Data.SetUp(Tokens.TokenAdminAPI, Tokens.TokenBasicUserAPI, Shares.KkomradeNoMessage)]
-    [Recycle(Recycled.TokenAdminAPI)]
+    [Recycle(Recycle.TokenAdminAPI)]
     [Swagger(Path = Paths.None, Operation = OperationType.Post, ResponseCode = 200)]
     public void POST_AdminShareRecipients_AddRecipient_200_141306()
     {
@@ -512,11 +527,50 @@ public sealed class Admin_Share_Recipients : APITest
         Verify(userInfo.IsTrialEnabled, "Trial enabled");
     }
 
+    [Test]
+    public void Test_Multiple_HTTP_Methods()
+    {
+        // Test GET request
+        Send(Get().To("api/users"));
+        
+        // Test PUT request
+        Send(Put(userData).To("api/users/123"));
+        
+        // Test DELETE request
+        Send(Delete().To("api/users/456"));
+        
+        // Test PATCH request
+        Send(Patch(updateData).To("api/users/789"));
+    }
+
 }
 """
 
+    small_test_code = """
+    class TestClass : APITest {
+        [Test]
+        public void Test_Multiple_HTTP_Methods()
+        {
+            var startpath = "api/users";
+            var path = "api/users";
+
+            // Test GET request
+            Send(Get().To(path)); // this should be evaluated to get api/users/api/users
+        
+            // Test PUT request
+            Send(Put(userData).To($"{startpath}/123")); // this should be evaluated to get api/users/api/users/123
+        
+            // Test DELETE request
+            Send(Delete().To(startpath + path)); // this should be evaluated to get api/users/api/users
+        
+            // Test PATCH request
+            Send(Patch(updateData).To("api/users/789")); // this should be evaluated to get api/users/789
+        }
+    }
+    """
+
     environment = Environment(env)
-    cs = CSFile(test_code, environment)
+    cs = CSFile(small_test_code, environment)
     
     print("Using directives:")
     print(cs.using_directives)
@@ -534,11 +588,7 @@ public sealed class Admin_Share_Recipients : APITest
         for method_name, method in class_env.callables.items():
             if isinstance(method, CSMethod):
                 print(f"    {method_name}: {method.attributes}")
-                # Show statements and method environment for the first method with a body
-                if method_name == "POST_AdminShareRecipients_AddRecipient_200_141306":
-                    print(f"      Statements:")
-                    for i, statement in enumerate(method.iterate_statements(), 1):
-                        print(f"        {i}. {statement}")
-                    print(f"      Method variables: {method.get_method_environment().values}")
+                print(f"      Method variables: {method.get_method_environment().values}")
+                print(f"      Send functions: {method.send_functions}")
             else:
                 print(f"    {method_name}: []")
