@@ -4,6 +4,92 @@ from typing import Optional
 import re
 from Interpreter import Interpreter
 
+def extract_send_content(text):
+    start = text.find('Send(')
+    if start == -1:
+        return None
+    i = start + len('Send(')
+    depth = 1
+    content = []
+    while i < len(text):
+        if text[i] == '(':
+            depth += 1
+        elif text[i] == ')':
+            depth -= 1
+            if depth == 0:
+                break
+        content.append(text[i])
+        i += 1
+    return ''.join(content).strip() if depth == 0 else None
+
+def extract_method_argument(content: str, method_name: str) -> Optional[str]:
+    """
+    Extract the argument from a method call using balanced parentheses parsing.
+    Handles nested parentheses correctly.
+    
+    Args:
+        content: The content to search in
+        method_name: The method name (e.g., 'Get', 'Post', etc.)
+    
+    Returns:
+        The argument string if found, None otherwise
+    """
+    try:
+        # Find the method name
+        method_pattern = rf'\b{re.escape(method_name)}\s*'
+        match = re.search(method_pattern, content, re.IGNORECASE)
+        if not match:
+            return None
+        
+        # Find the opening parenthesis after the method name
+        start_pos = match.end()
+        while start_pos < len(content) and content[start_pos].isspace():
+            start_pos += 1
+        
+        # Check for generic type parameters
+        if start_pos < len(content) and content[start_pos] == '<':
+            # Skip generic type parameters
+            depth = 1
+            start_pos += 1
+            while start_pos < len(content) and depth > 0:
+                if content[start_pos] == '<':
+                    depth += 1
+                elif content[start_pos] == '>':
+                    depth -= 1
+                start_pos += 1
+            # Skip whitespace after generic type
+            while start_pos < len(content) and content[start_pos].isspace():
+                start_pos += 1
+        
+        # Check for opening parenthesis
+        if start_pos >= len(content) or content[start_pos] != '(':
+            return None
+        
+        # Extract argument using balanced parentheses
+        start_pos += 1  # Skip opening parenthesis
+        depth = 1
+        arg_start = start_pos
+        arg_content = []
+        
+        while start_pos < len(content) and depth > 0:
+            if content[start_pos] == '(':
+                depth += 1
+            elif content[start_pos] == ')':
+                depth -= 1
+                if depth == 0:
+                    break
+            arg_content.append(content[start_pos])
+            start_pos += 1
+        
+        if depth == 0:
+            return ''.join(arg_content).strip()
+        else:
+            return None
+            
+    except Exception as e:
+        print(f"Debug: Error extracting method argument: {e}")
+        return None
+
 class Send:
     """
     A class that represents a C# Send function call.
@@ -20,6 +106,8 @@ class Send:
         self.evaluated_path = None  # The evaluated path using the environment
         self.raw_text = None  # Store the raw text for debugging
         self.line_number = node.start_point[0] + 1  # 1-based line number
+        self.verify_count_after = 0  # Number of Verify statements after this Send
+        self.expected_code = None  # Expected response code after this Send
         # Parse the Send function
         self._parse_send_function()
     
@@ -28,38 +116,25 @@ class Send:
         try:
             # Get the text of the Send function call
             self.raw_text = self.source_bytes[self.node.start_byte:self.node.end_byte].decode()
-            print(f"Debug: Parsing Send function: {self.raw_text} (line {self.line_number})")
             
             # Remove any trailing 'with { ... }' block for parsing
-            # This will not remove nested braces, but works for simple cases
             cleaned_text = re.sub(r'with\s*\{[^}]*\}\s*;?$', '', self.raw_text, flags=re.DOTALL).strip()
-            if cleaned_text != self.raw_text:
-                print(f"Debug: Found 'with' block, cleaned text for parsing: {cleaned_text}")
-            else:
-                print(f"Debug: No 'with' block found.")
             
             # Extract the argument inside Send(...)
-            send_match = re.match(r'Send\s*\(\s*(.+)\s*\)', cleaned_text, re.DOTALL)
-            if not send_match:
-                print(f"Debug: Could not parse Send function: {cleaned_text}")
+            inner_content = extract_send_content(cleaned_text)
+            if not inner_content:
                 return
-            
-            inner_content = send_match.group(1).strip()
             # Remove any trailing 'with { ... }' block from the inner_content
             cleaned_inner_content = re.sub(r'with\s*\{[^}]*\}\s*$', '', inner_content, flags=re.DOTALL).strip()
-            if cleaned_inner_content != inner_content:
-                print(f"Debug: Cleaned inner_content for parsing: {cleaned_inner_content}")
-            else:
-                print(f"Debug: No 'with' block in inner_content.")
-            print(f"Debug: Inner content: {cleaned_inner_content}")
             
             # Try new style first: Get(path), Post(obj).To(path), etc.
             if self._parse_new_style(cleaned_inner_content):
-                print(f"Debug: Parsed using new style: {self.request_type}, {self.path}")
+                pass
             else:
                 # Fallback to old style
                 self._parse_request_type(cleaned_inner_content)
                 self._parse_path(cleaned_inner_content)
+
             # Evaluate the path if possible
             if self.path and self.environment is not None:
                 try:
@@ -68,9 +143,7 @@ class Send:
                     # Strip quotes if present
                     if (isinstance(self.evaluated_path, str) and self.evaluated_path.startswith('"') and self.evaluated_path.endswith('"')):
                         self.evaluated_path = self.evaluated_path[1:-1]
-                    print(f"Debug: Final evaluated path: {self.evaluated_path}")
                 except Exception as e:
-                    print(f"Debug: Error evaluating path: {e}")
                     self.evaluated_path = self.path
         except Exception as e:
             print(f"Debug: Error parsing Send function: {e}")
@@ -78,36 +151,36 @@ class Send:
     def _parse_new_style(self, content: str) -> bool:
         """Try to parse new style: Get(path), Post(obj).To(path), etc. Returns True if successful."""
         try:
-            # Match Get(path) or Post(obj), Patch(data), etc. (no .To)
-            # Also handle generic types: Send<List<string>>(Patch(...))
-            # Try to match: METHOD_NAME(<args>)
-            method_match = re.match(r'(Get|Delete|Patch|Put|Post)\s*<[^>]+>\s*\\?\((.+)\)|'  # generic
-                                   r'(Get|Delete|Patch|Put|Post)\s*\((.+)\)', content, re.IGNORECASE | re.DOTALL)
-            if method_match:
-                if method_match.group(1):
-                    # Generic type
-                    self.request_type = method_match.group(1).upper()
-                    arg = method_match.group(2)
-                else:
-                    self.request_type = method_match.group(3).upper()
-                    arg = method_match.group(4)
-                # Remove any trailing 'with { ... }' block from the argument
-                cleaned_arg = re.sub(r'with\s*\{[^}]*\}\s*$', '', arg, flags=re.DOTALL).strip()
-                if cleaned_arg != arg:
-                    print(f"Debug: Cleaned path argument for {self.request_type}: {cleaned_arg}")
-                # For Get(path), path is the argument
-                if self.request_type == 'GET':
-                    self.path = cleaned_arg
-                    return True
-                # For Delete(path), Patch(data), etc., check if .To(path) is present
-                # If .To(path) is present, use old style
-                if re.search(r'\\.To\\s*\\(', content):
-                    return False
-                # For Post(obj), Put(obj), Patch(data), etc., path may not be present directly
-                # But for new style, if argument looks like a path, use it
-                if self.request_type in ['DELETE', 'PATCH', 'PUT', 'POST']:
-                    self.path = cleaned_arg
-                    return True
+            # Try to match HTTP methods: Get, Post, Put, Delete, Patch
+            method_names = ['Get', 'Post', 'Put', 'Delete', 'Patch']
+            
+            for method_name in method_names:
+                # First, check if this method exists in the content
+                if re.search(rf'\b{re.escape(method_name)}\s*[<(]', content, re.IGNORECASE):
+                    # Extract the argument using balanced parentheses parser
+                    arg = extract_method_argument(content, method_name)
+                    if arg is not None:
+                        self.request_type = method_name.upper()
+                        
+                        # Remove any trailing 'with { ... }' block from the argument
+                        cleaned_arg = re.sub(r'with\s*\{[^}]*\}\s*$', '', arg, flags=re.DOTALL).strip()
+                        
+                        # For Get(path), path is the argument
+                        if self.request_type == 'GET':
+                            self.path = cleaned_arg
+                            return True
+                        
+                        # For Delete(path), Patch(data), etc., check if .To(path) is present
+                        # If .To(path) is present, use old style
+                        if re.search(r'\.To\s*\(', content):
+                            return False
+                        
+                        # For Post(obj), Put(obj), Patch(data), etc., path may not be present directly
+                        # But for new style, if argument looks like a path, use it
+                        if self.request_type in ['DELETE', 'PATCH', 'PUT', 'POST']:
+                            self.path = cleaned_arg
+                            return True
+            
             return False
         except Exception as e:
             print(f"Debug: Error parsing new style: {e}")
@@ -123,9 +196,9 @@ class Send:
             request_match = re.match(r'(Post|Put|Get|Delete|Patch)', content.strip(), re.IGNORECASE)
             if request_match:
                 self.request_type = request_match.group(1).upper()
-                print(f"Debug: Found request type: {self.request_type}")
             else:
-                print(f"Debug: Could not find request type in: {content}")
+                pass
+                # print(f"Debug: Could not find request type in: {content}")
         except Exception as e:
             print(f"Debug: Error parsing request type: {e}")
     
@@ -140,9 +213,9 @@ class Send:
                 # Clean up the path argument (remove extra whitespace, newlines)
                 path_arg = re.sub(r'\s+', ' ', path_arg)
                 self.path = path_arg
-                print(f"Debug: Found path: {self.path}")
             else:
-                print(f"Debug: Could not find To() argument in: {content}")
+                pass
+                # print(f"Debug: Could not find To() argument in: {content}")
         except Exception as e:
             print(f"Debug: Error parsing path: {e}")
     

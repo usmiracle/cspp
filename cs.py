@@ -1,4 +1,5 @@
 import tree_sitter_c_sharp as tscs
+import re
 
 from Interpreter import Interpreter
 from Types import Callable
@@ -20,7 +21,7 @@ class CSFile:
         self.language = Language(tscs.language())
         self.parser = Parser(self.language)
         self.tree = self.parser.parse(self.source)
-        self.environment = environment
+        self.environment = Environment(environment)
         self.using_directives = []  # Store using directives
         
         # Parse using directives first
@@ -40,11 +41,11 @@ class CSFile:
     def _parse_using_directives(self):
         """Parse using_directive nodes from the compilation unit"""
         root_node = self.tree.root_node
+        root_node_text = self.source[root_node.start_byte:root_node.end_byte].decode()
         for child in root_node.children:
             if child.type == "using_directive":
                 using_text = self.source[child.start_byte:child.end_byte].decode()
                 self.using_directives.append(using_text)
-                print(f"Debug: Found using directive: {using_text}")
 
     def _parse_file_level_declarations(self):
         """
@@ -145,8 +146,7 @@ class CSClass(Callable):
 
         self.node = node
         self.source = source
-        self.environment = environment
-        self.class_environment = Environment(environment)  # Class-specific environment
+        self.environment = Environment(environment)
         self.attributes = []  # Store class attributes
         
         # Extract attributes first
@@ -161,42 +161,32 @@ class CSClass(Callable):
             if child.type == "attribute_list":
                 attr_text = self.source[child.start_byte:child.end_byte].decode()
                 self.attributes.append(attr_text)
-                print(f"Debug: Found attribute: {attr_text}")
     
     def _parse_class_members(self):
         """Parse all member_declaration nodes within the class"""
         # Find the class body (member_declaration nodes)
-        print(f"Debug: Parsing class {self.name}")
-        print(f"Debug: Class node children: {[child.type for child in self.node.children]}")
         
         for child in self.node.children:
-            print(f"Debug: Processing child: {child.type}")
             if child.type == "declaration_list":
-                print(f"Debug: Found declaration_list")
                 self._parse_declaration_list(child)
             elif child.type == "member_declaration":
-                print(f"Debug: Found member_declaration")
                 self._parse_member_declaration(child)
             elif child.type == "field_declaration":
-                print(f"Debug: Found field_declaration directly")
                 self._parse_field_declaration(child)
             elif child.type == "method_declaration":
-                print(f"Debug: Found method_declaration directly")
                 self._parse_method_declaration(child)
     
     def _parse_declaration_list(self, node: Node):
         """Parse a declaration_list node containing member_declaration, field_declaration, method_declaration, etc."""
-        print(f"Debug: declaration_list children: {[child.type for child in node.children]}")
         for child in node.children:
             if child.type == "member_declaration":
-                print(f"Debug: Found member_declaration in declaration_list")
                 self._parse_member_declaration(child)
             elif child.type == "field_declaration":
-                print(f"Debug: Found field_declaration in declaration_list")
                 self._parse_field_declaration(child)
             elif child.type == "method_declaration":
-                print(f"Debug: Found method_declaration in declaration_list")
                 self._parse_method_declaration(child)
+            elif child.type == "property_declaration":
+                self._parse_property_declaration(child)
     
     def _parse_member_declaration(self, node: Node):
         """Parse a member_declaration node"""
@@ -205,6 +195,8 @@ class CSClass(Callable):
                 self._parse_field_declaration(child)
             elif child.type == "method_declaration":
                 self._parse_method_declaration(child)
+            elif child.type == "property_declaration":
+                self._parse_property_declaration(child)
     
     def _parse_field_declaration(self, node: Node):
         """Parse a field_declaration node within the class"""
@@ -230,10 +222,10 @@ class CSClass(Callable):
                                 # Remove '=' and whitespace
                                 value_text = value_text.lstrip('=').strip()
                                 # Evaluate the value
-                                var_value = Interpreter.evaluate(item, value_text, self.class_environment)
+                                var_value = Interpreter.evaluate(item, value_text, self.environment)
                         if var_name:
                             # Store the variable in the class environment
-                            self.class_environment.define_variable(var_name, var_value)
+                            self.environment.define_variable(var_name, var_value)
     
     def _parse_method_declaration(self, node: Node):
         """Parse a method_declaration node"""
@@ -271,11 +263,52 @@ class CSClass(Callable):
                     expression_body, 
                     param_names
                 )
-                self.class_environment.define_method(method_name, method)
+                self.environment.define_method(method_name, method)
             elif has_block:
                 # Create CSMethod for regular methods
-                method = CSMethod(method_name, method_type or "void", len(parameter_list), node, self.source, self.class_environment)
-                self.class_environment.define_method(method_name, method)
+                method = CSMethod(method_name, method_type or "void", len(parameter_list), node, self.source, self.environment)
+                self.environment.define_method(method_name, method)
+    
+    def _parse_property_declaration(self, node: Node):
+        """Parse a property_declaration node"""
+        property_name = None
+        property_type = None
+        expression_body = None
+        equals_value = None
+        
+        # Parse property components
+        for child in node.children:
+            if child.type == "predefined_type":
+                property_type = self.source[child.start_byte:child.end_byte].decode().strip()
+            elif child.type == "identifier":
+                property_name = self.source[child.start_byte:child.end_byte].decode()
+            elif child.type == "arrow_expression_clause":
+                # Expression-bodied property: private string Endpoint => $"{GlobalLabShare}/gl-share/api/Admin/share";
+                expression_text = self.source[child.start_byte:child.end_byte].decode()
+                # Remove the '=>' and trim
+                expression_body = expression_text.lstrip('=>').strip()
+            elif child.type == "equals_value_clause":
+                # Property with initializer: private string Endpoint = "value";
+                equals_text = self.source[child.start_byte:child.end_byte].decode()
+                # Remove the '=' and trim
+                equals_value = equals_text.lstrip('=').strip()
+        
+        if property_name:
+            if expression_body:
+                # Handle expression-bodied property as a method with no parameters
+                from Types import ExpressionBioledMethod
+                method = ExpressionBioledMethod(
+                    property_name,
+                    property_type or "object",
+                    0,  # No parameters
+                    expression_body,
+                    []  # No parameter names
+                )
+                self.environment.define_method(property_name, method)
+            elif equals_value:
+                # Handle property with initializer as a variable
+                evaluated_value = Interpreter.evaluate(None, equals_value, self.environment)
+                self.environment.define_variable(property_name, evaluated_value)
     
     def _parse_parameter_list(self, node: Node) -> list:
         """Parse a parameter_list node and return list of parameter info"""
@@ -307,7 +340,7 @@ class CSClass(Callable):
 
     def get_class_environment(self) -> Environment:
         """Get the class-specific environment containing variables and methods"""
-        return self.class_environment
+        return self.environment
 
 
 class CSMethod(Callable):
@@ -336,13 +369,44 @@ class CSMethod(Callable):
             if child.type == "attribute_list":
                 attr_text = self.source[child.start_byte:child.end_byte].decode()
                 self.attributes.append(attr_text)
-                print(f"Debug: Found method attribute: {attr_text}")
     
     def _parse_send_functions(self):
         """Parse Send function calls from statement nodes and create Send objects."""
         for stmt_node in self.iterate_statements():
             # Look for invocation_expression nodes that might be Send calls
             self._find_send_calls_in_node(stmt_node)
+        # After all Send nodes are found, count Verify statements after each
+        self._count_verify_statements_after_send()
+
+    def _count_verify_statements_after_send(self):
+        """For each Send node, count the number of Verify statements after it, up to the next Send or end of method."""
+        if not self.send_functions:
+            return
+        # Get the method source lines
+        method_lines = self.source[self.node.start_byte:self.node.end_byte].decode().split('\n')
+        # Map: line number (1-based, relative to method start) -> Send object
+        send_line_numbers = [(send.line_number, send) for send in self.send_functions]
+        send_line_numbers.sort(key=lambda x: x[0])  # ascending order by line number
+        # For each Send, count Verify statements after it
+        for idx, (send_line, send_obj) in enumerate(send_line_numbers):
+            # Determine the end line: next Send or end of method
+            if idx + 1 < len(send_line_numbers):
+                end_line = send_line_numbers[idx + 1][0]
+            else:
+                end_line = len(method_lines) + 1  # past the end
+            count = 0
+            found_code = None
+            for i in range(send_line, end_line):
+                if i-1 < len(method_lines):
+                    line = method_lines[i-1]
+                    if 'Verify(' in line:
+                        count += 1
+                    # Look for Verify(Response.StatusCode).Is(...)
+                    m = re.search(r'Verify\(\s*Response\.StatusCode\s*\)\.Is\(([^)]+)\)', line)
+                    if m and found_code is None:
+                        found_code = m.group(1).strip()
+            send_obj.verify_count_after = count
+            send_obj.expected_code = found_code
     
     def _find_send_calls_in_node(self, node: Node):
         """Recursively search for Send function calls in a node and its children."""
@@ -351,7 +415,6 @@ class CSMethod(Callable):
             try:
                 send_obj = Send(node, self.source, self.method_environment)
                 self.send_functions.append(send_obj)
-                print(f"Debug: Found Send function: {send_obj}")
             except Exception as e:
                 print(f"Debug: Error parsing Send function: {e}")
         
@@ -375,10 +438,8 @@ class CSMethod(Callable):
         for stmt_node in self.iterate_statements():
             # Only process local_declaration_statement nodes
             if stmt_node.type == "local_declaration_statement":
-                print(f"Debug: local_declaration_statement children: {[child.type for child in stmt_node.children]}")
                 for child in stmt_node.children:
                     if child.type == "variable_declaration":
-                        print(f"Debug: variable_declaration children: {[c.type for c in child.children]}")
                         var_type = None
                         for decl_child in child.children:
                             if decl_child.type == "predefined_type":
@@ -386,7 +447,6 @@ class CSMethod(Callable):
                             elif decl_child.type == "implicit_type":
                                 var_type = self.source[decl_child.start_byte:decl_child.end_byte].decode().strip()
                             elif decl_child.type == "variable_declarator":
-                                print(f"Debug: variable_declarator children: {[c.type for c in decl_child.children]}")
                                 var_name = None
                                 var_value = ""
                                 children = list(decl_child.children)
@@ -414,8 +474,6 @@ class CSMethod(Callable):
                                         i += 1
                                 if var_name and var_value:
                                     self.method_environment.define_variable(var_name, var_value)
-        # Debug output: show what is stored in the method environment after parsing
-        print(f"Debug: Method environment after variable parsing: {self.method_environment.values}")
 
     def iterate_statements(self) -> Iterator[Node]:
         """
@@ -435,176 +493,8 @@ class CSMethod(Callable):
             # Skip the opening and closing braces
             if child.type == '{' or child.type == '}':
                 continue
-            print(f"Debug: Statement node type: {child.type}, text: {self.source[child.start_byte:child.end_byte].decode().strip()}")
             yield child
     
     def get_method_environment(self) -> Environment:
         """Get the method-specific environment containing variables"""
         return self.method_environment
-
-# Test
-if __name__ == "__main__":
-    from main import create_globals, globals
-
-    env = create_globals(globals)
-
-    test_code = """
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using NUnit.Framework;
-
-private string a = "hello";
-
-[Parallizable]
-public sealed class Admin_Share_Recipients : APITest
-{
-    private string abc = "gl-share/api/Admin/share";
-    private string Endpoint = $"gl-share/api/Admin/share";
-
-    private string EndpointWithShareLink(string shareLink) => $"{Endpoint}/{shareLink}/recipients";
-
-    private string anothervar = $"{EndpointWithShareLink("somelink/ink")}";
-
-    [Test]
-    [Data.SetUp(Tokens.TokenAdminAPI, Tokens.TokenBasicUserAPI, Shares.KkomradeNoMessage)]
-    [Recycle(Recycle.TokenAdminAPI)]
-    [Swagger(Path = Paths.None, Operation = OperationType.Post, ResponseCode = 200)]
-    public void POST_AdminShareRecipients_AddRecipient_200_141306()
-    {
-        var token = Get<Token>(Tokens.TokenAdminAPI);
-        var shareGroup = Get<ShareGroup>(Shares.KkomradeNoMessage);
-        Models.User toAdd = Get<Models.User>(Users.BasicTierUser);
-        Recipient recipient = (Recipient)toAdd with
-        {
-            UserWhoAddedRecipient = token.User.Email,
-
-        };
-    }
-    
-    [Test]
-    [Data.SetUp(Tokens.TokenAdminAPI, Tokens.AnyTierUserAPI)]
-    [Recycle(Recycled.TokenAdminAPI, Recycled.AnyTierUserAPI)]
-    public void POST_Admin_External_Pricing_GiveNewTrial_201_133278()
-    {
-        var admin = Get<Token>(Tokens.TokenAdminAPI);
-        var subject = Get<Token>(Tokens.AnyTierUserAPI);
-        subject.User.SetUserToken(subject);
-
-        UpdateExternalUserPricingModel disableTrialRequest = new()
-        {
-            UserId = int.Parse(subject.User.Id),
-            PricingTypeId = (int)PricingType.Free,
-            EnableTrial = false,
-        };
-
-        Send(
-            Post(disableTrialRequest).To(Endpoint)
-            with
-            { Authorization = Bearer(admin.AccessToken) }
-        );
-
-        var userInfo = PollForExpectedTrialStatus(subject, false);
-        Verify(userInfo?.IsTrialEnabled, "Trial disabled").Succintly.Is(false);
-
-        var enableTrialRequest = disableTrialRequest with
-        {
-            PricingTypeId = (int)PricingType.Free,
-            EnableTrial = true,
-        };
-
-        Send(
-            Post(enableTrialRequest).To(Endpoint)
-            with
-            { Authorization = Bearer(admin.AccessToken) }
-        );
-
-        Verify(Response.StatusCode).Is(Created);
-        Verify(Response.Content.As<string>(SerializationFormat.Text)).Is("Successfully added trial subscription for user on Subscriptions API. Status code: 201");
-
-        userInfo = PollForExpectedTrialStatus(subject, true);
-        Verify(userInfo.IsTrialEnabled, "Trial enabled");
-    }
-
-    [Test]
-    public void Test_Multiple_HTTP_Methods()
-    {
-        // Test GET request
-        // Send(Get().To("api/users")); // old way to do it
-        Send(Get("api/users") with {
-            Authorization = Bearer(admin.AccessToken)
-        }); // new way to do it
-        
-        // Test POST request
-        Send(Post(userData with {
-            UserId = 123
-        }).To("api/users/123") with {
-            Authorization = Bearer(admin.AccessToken)
-        });
-        
-        // Test DELETE request
-        Send(Delete().To("api/users/456"));
-        
-        // Test PATCH request
-        Send(Patch(updateData).To("api/users/789"));
-    }
-
-}
-"""
-
-    small_test_code = """
-    class TestClass : APITest {
-        [Test]
-        public void Test_Multiple_HTTP_Methods()
-        {
-            var startpath = "/api/users";
-            var path = "/api/users";
-
-            // Test GET request
-            Send(Get(path)); // path should be evaluated to get /api/users
-            Send(Get(path) with {
-                Authorization = Bearer(admin.AccessToken) // path should be evaluated to get /api/users
-            }); // new way
-
-            // Test Post request
-            Send(Post(userData).To($"{startpath}/123") with {
-                Authorization = Bearer(admin.AccessToken)
-            }); // this should be evaluated to get /api/users/api/users/123
-
-            // Test DELETE request
-            Send(Delete().To(startpath + path)
-                with {
-                    Authorization = Bearer(admin.AccessToken)
-                }
-            ); // this should be evaluated to get api/users/api/users
-
-            // Test PATCH request
-            Send<List<string>>(Patch(updateData).To("api/users/789")); // this should be evaluated to get api/users/789
-        }
-    }
-    """
-    environment = Environment(env)
-    cs = CSFile(small_test_code, environment)
-    
-    print("Using directives:")
-    print(cs.using_directives)
-    
-    print("\nFile-level variables:")
-    print(cs.environment.values)
-    
-    print("\nClasses found:")
-    for csharp_class in cs.get_classes():
-        print(f"\nClass: {csharp_class.name}")
-        print(f"  Attributes: {csharp_class.attributes}")
-        class_env = csharp_class.get_class_environment()
-        print(f"  Variables: {class_env.values}")
-        print(f"  Methods:")
-        for method_name, method in class_env.callables.items():
-            if isinstance(method, CSMethod):
-                print(f"    {method_name}: {method.attributes}")
-                print(f"      Method variables: {method.get_method_environment().values}")
-                print(f"      Send functions:")
-                for send_func in method.send_functions:
-                    print(f"        {send_func}")
-            else:
-                print(f"    {method_name}: []")
