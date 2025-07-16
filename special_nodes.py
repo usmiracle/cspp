@@ -65,7 +65,9 @@ class Send:
         try:
             # Look for Post(...), Put(...), or Get(...)
             # Handle both single-line and multi-line patterns
-            request_match = re.match(r'(Post|Put|Get|Delete|Patch)\s*\(', content, re.IGNORECASE)
+            # Also handle generic types like Post<List<Recipient>>
+            # Use a simpler approach - just look for the HTTP method name
+            request_match = re.match(r'(Post|Put|Get|Delete|Patch)', content.strip(), re.IGNORECASE)
             if request_match:
                 self.request_type = request_match.group(1).upper()
                 print(f"Debug: Found request type: {self.request_type}")
