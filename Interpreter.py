@@ -141,7 +141,7 @@ class Interpreter:
             return value
         
         result = re.sub(pattern, replace_interpolation, content)
-        return f'"{result}"'
+        return result  # Return without quotes
     
     @staticmethod
     def _resolve_string_concatenation(expression: str, environment: Environment) -> str:
@@ -161,9 +161,9 @@ class Interpreter:
                 resolved_part = resolved_part[1:-1]
             resolved_parts.append(resolved_part)
         
-        # Join all parts and wrap in quotes
+        # Join all parts and return without quotes
         result = ''.join(resolved_parts)
-        return f'"{result}"'
+        return result
 
     @staticmethod
     def _resolve_variable_reference(var_name: str, environment: Environment) -> str:
@@ -172,9 +172,9 @@ class Interpreter:
             value = environment.get_variable(var_name)
             if value is not None:
                 return str(value)
-            return f'"{var_name}"'  # Return variable name in quotes if not found
+            return var_name  # Return variable name without quotes if not found
         except:
-            return f'"{var_name}"'  # Return variable name in quotes if error
+            return var_name  # Return variable name without quotes if error
         
     
     @staticmethod
