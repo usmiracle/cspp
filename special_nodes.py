@@ -160,7 +160,7 @@ class Send:
                     # Extract the argument using balanced parentheses parser
                     arg = extract_method_argument(content, method_name)
                     if arg is not None:
-                        self.request_type = method_name
+                        self.request_type = method_name.upper()
                         
                         # Remove any trailing 'with { ... }' block from the argument
                         cleaned_arg = re.sub(r'with\s*\{[^}]*\}\s*$', '', arg, flags=re.DOTALL).strip()
