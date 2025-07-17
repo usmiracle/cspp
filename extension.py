@@ -27,6 +27,13 @@ class SwaggerAdder:
         line_changes: list[list[str]] = []
         with open(file_path, 'r', encoding='utf-8') as f:
             source = f.read()
+        source = source.replace(" { get; set; } ", " ")
+        source = source.replace("{ get; set; }", "")
+        source = source.replace("{get;set}", "")
+        source = source.replace("{get;set; }", "")
+        source = source.replace("{get;set;}", "")
+        source = source.replace("{get;set; }", "")
+
         env = create_globals(globals)
         environment = Environment(env)
         cs_file = CSFile(source, environment)

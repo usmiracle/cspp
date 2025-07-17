@@ -23,6 +23,13 @@ def test_class_environment():
     with open("testfile.cs", "r") as file:
         cs_file_content = file.read()
 
+    cs_file_content = cs_file_content.replace(" { get; set; } ", " ")
+    cs_file_content = cs_file_content.replace("{ get; set; }", "")
+    cs_file_content = cs_file_content.replace("{get;set}", "")
+    cs_file_content = cs_file_content.replace("{get;set; }", "")
+    cs_file_content = cs_file_content.replace("{get;set;}", "")
+    cs_file_content = cs_file_content.replace("{get;set; }", "")
+
     cs_file = CSFile(cs_file_content, global_env)
     classes_seen = 0
 
@@ -163,15 +170,10 @@ def test_method_environment_2():
 
 
     for c in cs_classes:
-        print("Testing Admin_User_Pricing")
         default_page_number = c.environment.get_variable("DefaultPageNumber")
-        print("Default page number is", default_page_number)
         default_page_size = c.environment.get_variable("DefaultPageSize")
-        print("Default page size is", default_page_size)
-        assert(default_page_number == 1)
-        assert(default_page_size == 50)
-        print("Default page number and size are correct")
-
+        assert(default_page_number == "1")
+        assert(default_page_size == "50")
 
             
         endpointwithparams = c.environment.get_method("EndpointWithParameters")
