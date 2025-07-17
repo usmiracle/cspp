@@ -62,7 +62,13 @@ def test_class_environment():
         assert(c.attributes == ["[Parallelizable]"])
 
 
-        assert(len(c.environment.callables) == 3)
+        assert(len(c.environment.callables) == 4)
+        assert(c.environment.get_method("EndpointWithParameters") is not None)
+        assert(c.environment.get_method("EndpointWithParameters").arity == 2)
+        interpreter = Interpreter(c.environment)
+        endpoint_with_parameters_method_call_val = c.environment.get_method("EndpointWithParameters").call(interpreter, [1, 2])
+        expected_endpoint_with_parameters = f"{gloabllabshare}/gl-share/api/Admin/users/pricing/1/2"
+        assert(endpoint_with_parameters_method_call_val == expected_endpoint_with_parameters)
 
 
     assert(classes_seen == total_classes)
