@@ -41,6 +41,7 @@ def test_class_environment():
         endpoint_method = c.environment.get_method("Endpoint")
         assert(endpoint_method is not None)
         assert(isinstance(endpoint_method, Types.ExpressionBioledMethod))
+
         interpreter = Interpreter(c.environment)
         endpoint_method_call_val = endpoint_method.call(interpreter, [])
         expected_endpoint = f"{gloabllabshare}/gl-share/api/Admin/share"
