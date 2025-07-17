@@ -365,7 +365,7 @@ class CSClass(Callable):
                 continue
 
             for attr in method.attributes:
-                if 'Test' in attr:
+                if "EmailTest" not in attr and 'Test' in attr:
                     yield method
 
     def get_class_environment(self) -> Environment:
