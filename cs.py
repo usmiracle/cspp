@@ -441,14 +441,20 @@ class CSMethod(Callable):
 
             if found_code == "OK":
                 found_code = "200"
-            elif found_code == "NotFound":
-                found_code = "404"
-            elif found_code == "Unauthorized":
-                found_code = "401"
+            elif found_code == "Created":
+                found_code = "201"
+            elif found_code == "NoContent":
+                found_code = "204"
             elif found_code == "BadRequest":
                 found_code = "400"
+            elif found_code == "Unauthorized":
+                found_code = "401"
             elif found_code == "Forbidden":
                 found_code = "403"
+            elif found_code == "NotFound":
+                found_code = "404"
+            elif found_code == "Gone":
+                found_code = "410"
             elif found_code == "InternalServerError":
                 found_code = "500"
         
