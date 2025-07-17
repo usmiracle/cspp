@@ -4,8 +4,8 @@ using TransPerfect.Automation.Framework;
 public sealed class Admin_Share_ShareLinkId : APITest
 {
     private string Endpoint => $"{GlobalLabShare}/gl-share/api/Admin/share";
-
     private string EndpointWithShareLink(string shareLink) => $"{Endpoint}/{shareLink}";
+    private string EndpointWithParameters(int pageNumber, int pageSize) => $"{GlobalLabShare}/gl-share/api/Admin/users/pricing/{pageNumber}/{pageSize}";
 
     [Test]
     [Data.SetUp(Tokens.TokenAdminAPI, Shares.KkomradeNoMessage)]
