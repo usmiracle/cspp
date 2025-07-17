@@ -7,27 +7,24 @@ from helper import create_globals, globals, PathResolver, paths
 from Environment import Environment
 
 class SwaggerAdder:
-    def __init__(self, cs_dir):
-        self.cs_dir = cs_dir
+    def __init__(self, cs_dir: str):
+        self.start_at = cs_dir
         self.path_resolver = PathResolver(paths)
 
-    def process_all(self):
-        cs_files = glob.glob(f"{self.cs_dir}/**/*.cs", recursive=True)
-        summary = []
-        for cs_file in cs_files:
-            updated, changes = self.process_file(cs_file)
-            if updated:
-                with open(cs_file, 'w', encoding='utf-8') as f:
-                    print(f"Writing to {cs_file}")
-                    f.write(updated)
-                summary.append((cs_file, changes))
-        print("\nSwagger attribute insertion summary:")
-        for fname, changes in summary:
-            print(f"{fname}: {len(changes)} Swagger attributes added")
-            for c in changes:
-                print(f"  - {c}")
+    def process_all(self, start_at: str | None = None):
+        if start_at is None:
+            start_at = self.start_at
+
+        if os.path.isfile(start_at):
+            return self.process_file(start_at)
+        
+        for entry in os.listdir(start_at):
+            self.process_all(os.path.join(self.start_at, entry))
 
     def process_file(self, file_path):
+        print(f"Processing file: {file_path}")
+
+        line_changes: list[list[str]] = []
         with open(file_path, 'r', encoding='utf-8') as f:
             source = f.read()
         env = create_globals(globals)
@@ -38,34 +35,54 @@ class SwaggerAdder:
         for csharp_class in cs_file.get_classes():
             if not self.is_api_test_class(csharp_class):
                 continue
-            class_env = csharp_class.get_class_environment()
-            for method_name, method in class_env.callables.items():
-                if not isinstance(method, CSMethod):
-                    continue
-                if not self.is_test_method(method):
-                    continue
+
+            for method in csharp_class.get_test_methods():
                 if self.has_swagger_attribute(method):
                     continue
-                # Find best Send node for this method
-                send_obj = self.select_best_send(method, method_name)
+
+                send_obj = self.select_best_send(method, method.name)
                 if not send_obj:
+                    print("NO SEND OBJECT FOUND FOR METHOD", method.name)                
                     continue
-                # Build Swagger attribute
-                path_var = self.path_resolver.get_var_for_path(str(send_obj.evaluated_path)) or "Unknown"
-                op_type = send_obj.get_request_type() or "Unknown"
-                resp_code = send_obj.expected_code or "Unknown"
+                    
+                path_var = self.path_resolver.get_var_for_path(str(send_obj.evaluated_path))
+
+                op_type = send_obj.get_request_type()
+                resp_code = send_obj.expected_code
                 swagger_attr = f"[Swagger(Path = Paths.{path_var}, Operation = OperationType.{op_type}, ResponseCode = {resp_code})]"
                 # Insert above method declaration
-                method_line = self.find_method_declaration_line(lines, method_name)
-                if method_line is not None:
-                    lines.insert(method_line, swagger_attr)
-                    changes.append(f"{method_name}: {swagger_attr}")
+                method_line = self.find_method_declaration_line(lines, method.name)
+
+                assert(method_line is not None)
+                # change this
+                line_changes.append([method_line, swagger_attr])
+                changes.append(f"{method.name}: {swagger_attr}")
+
+        self.insert_swagger_attribute(file_path, line_changes)
+
         if changes:
             return ('\n'.join(lines), changes)
         return (None, [])
 
-    def is_api_test_class(self, csharp_class):
-        return csharp_class.name.endswith('APITest') or 'APITest' in str(csharp_class.attributes)
+
+    def insert_swagger_attribute(self, filename: str, changes: list[list[str]]):
+        with open(filename, 'r', encoding='utf-8') as f:
+            file = f.read()
+
+        for line, attr in changes:
+            # Get leading whitespace from the original line
+            m = re.match(r"^\s*", line)
+            leading_ws = m.group(0) if m else ''
+            file = file.replace(line, f"{leading_ws}{attr}\n{line}")
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(file)
+
+
+    def is_api_test_class(self, csharp_class: CSClass):
+        if 'APITest' in csharp_class.super_class_name:
+            return True
+        return False
 
     def is_test_method(self, method):
         return any('[Test]' in str(attr) for attr in getattr(method, 'attributes', []))
@@ -73,13 +90,13 @@ class SwaggerAdder:
     def has_swagger_attribute(self, method):
         return any('Swagger(' in str(attr) for attr in getattr(method, 'attributes', []))
 
-    def find_method_declaration_line(self, lines, method_name):
+    def find_method_declaration_line(self, lines: list[str], method_name: str) -> str | None:
         for i, line in enumerate(lines):
             if f'public void {method_name}(' in line or f'public async Task {method_name}(' in line:
-                return i
+                return line
         return None
 
-    def select_best_send(self, method, method_name):
+    def select_best_send(self, method: CSMethod, method_name: str) -> Send | None:
         sends = getattr(method, 'send_functions', [])
         if not sends:
             return None
@@ -123,25 +140,14 @@ class SwaggerAdder:
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python extension.py <file_or_folder_path>")
-        sys.exit(1)
-    
-    path = sys.argv[1]
-    if os.path.isfile(path):
-        # Process single file
-        swagger_adder = SwaggerAdder(os.path.dirname(path) or ".")
-        updated, changes = swagger_adder.process_file(path)
-        if updated:
-            with open(path, 'w', encoding='utf-8') as f:
-                print(f"Writing to {path}")
-                f.write(updated)
-            print(f"\nSwagger attribute insertion summary:")
-            print(f"{path}: {len(changes)} Swagger attributes added")
-            for c in changes:
-                print(f"  - {c}")
-        else:
-            print(f"No changes needed for {path}")
+        # start_at = "testfile.cs"
+        start_at = "csfiles"
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        start_at = os.path.join(current_dir, start_at)
     else:
-        # Process directory
-        SwaggerAdder(path).process_all()
+        start_at = sys.argv[1]
+    
+    swagger_adder = SwaggerAdder(start_at)
+
+    swagger_adder.process_all()
     

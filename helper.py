@@ -214,6 +214,11 @@ class PathResolver:
 
     def get_var_for_path(self, path: str):
         path_lc = path.lower()
+        # If path starts with http or https, strip to portion starting from /api
+        if path_lc.startswith('http://') or path_lc.startswith('https://'):
+            idx = path_lc.find('/api')
+            if idx != -1:
+                path_lc = path_lc[idx:]
         # 1. Check plain paths
         if path_lc in self.paths['plain']:
             return self.paths['plain'][path_lc]

@@ -149,7 +149,7 @@ class CSClass(Callable):
         self.node = node
         self.source = source
         self.environment = Environment(environment)
-        self.attributes = []  # Store class attributes
+        self.attributes: list[str] = []  # Store class attributes
         self.super_class_name: str = ""
 
         self._extract_super_class_name(source)
@@ -361,8 +361,12 @@ class CSClass(Callable):
 
     def get_test_methods(self) -> Iterator['CSMethod']:
         for method in self.environment.callables.values():
-            if isinstance(method, CSMethod) and not isinstance(method, ExpressionBioledMethod):
-                yield method
+            if not isinstance(method, CSMethod):
+                continue
+
+            for attr in method.attributes:
+                if 'Test' in attr:
+                    yield method
 
     def get_class_environment(self) -> Environment:
         """Get the class-specific environment containing variables and methods"""
@@ -434,6 +438,20 @@ class CSMethod(Callable):
                     if m and found_code is None:
                         found_code = m.group(1).strip()
             send_obj.verify_count_after = count
+
+            if found_code == "OK":
+                found_code = "200"
+            elif found_code == "NotFound":
+                found_code = "404"
+            elif found_code == "Unauthorized":
+                found_code = "401"
+            elif found_code == "BadRequest":
+                found_code = "400"
+            elif found_code == "Forbidden":
+                found_code = "403"
+            elif found_code == "InternalServerError":
+                found_code = "500"
+        
             send_obj.expected_code = found_code
     
     def _find_send_calls_in_node(self, node: Node):
@@ -451,7 +469,7 @@ class CSMethod(Callable):
                     self.send_functions.append(send_obj)
             except Exception as e:
                 print(f"Debug: Error parsing Send function: {e}")
-        
+  
         # Recursively check children
         for child in node.children:
             self._find_send_calls_in_node(child)

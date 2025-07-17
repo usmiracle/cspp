@@ -97,7 +97,15 @@ def test_method_environment():
 
                     assert(s.verify_count_after == 0)
 
+                if s.line_number == 11:
+                    assert(s.expected_code == "200")
+                    assert(s.verify_count_after == 3)
 
+                if s.line_number == 33:
+                    assert(s.expected_code == "200")
+                    assert(s.verify_count_after == 4)
+
+            
     assert(methods_seen == total_methods)
 
 
@@ -111,6 +119,36 @@ def test_path_resolver():
     assert(path_resolver.get_var_for_path("/api/Admin/blacklist-organizations") == "AdminBlackList")
     assert(path_resolver.get_var_for_path("/api/ApprovalLinks/approval.Key") == "ApprovalLinksApprovalKey")
     assert(path_resolver.get_var_for_path("/api/Admin/share/1234567890") == "AdminShareSharelinkid")
+    assert(path_resolver.get_var_for_path("/api/Admin/share/shareGroup.Share.Id/disability") == "AdminShareSharelinkidDisability")
+
+
+def test_select_best_send():
+    from extension import SwaggerAdder
+    print("Starting test_select_best_send")
+
+    swagger_adder = SwaggerAdder("testfile.cs")
+
+    gloabllabshare = cs_classes[0].environment.get_variable("GlobalLabShare")
+    endpoint = cs_classes[0].environment.get_variable("Endpoint")
+
+    test_method = cs_classes[0].environment.get_method("GET_AdminShare_DisabledShare_200_141460")
+    assert(test_method is not None)
+    assert(test_method.name == "GET_AdminShare_DisabledShare_200_141460")
+
+    assert(isinstance(test_method, CSMethod))
+    send_obj = swagger_adder.select_best_send(test_method, test_method.name)
+
+    assert(send_obj is not None)
+    assert(send_obj.expected_code == "200")
+    assert(send_obj.request_type == "GET")
+    assert(send_obj.evaluated_path == f"{endpoint}/shareGroup.Share.Id")
+    assert(send_obj.verify_count_after is not None)
+    
+    path_resolver = PathResolver(paths)
+    path_var = path_resolver.get_var_for_path(str(send_obj.evaluated_path))
+    assert(path_var == "AdminShareSharelinkid")
+    
+    print("ending test_select_best_send")
 
 
 test_global_environment(global_env)
@@ -118,3 +156,4 @@ test_class_environment()
 test_method_environment()
 test_path_to_var()
 test_path_resolver()
+test_select_best_send()
