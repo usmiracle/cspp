@@ -6,6 +6,22 @@ from special_nodes import Send
 from helper import create_globals, globals, PathResolver, paths
 from Environment import Environment
 
+'''
+C:\Users\sulabh.katila\source\repos\glshare\Tests\API\Share\Share_shareLink.cs
+'''
+
+OPENAPI_NAMESPACE = "using Microsoft.OpenApi.Models;"
+SWAGGER_NAMESPACE = "using TransPerfect.Automation.Framework.Swagger;"
+
+root_root = "C:\\Users\\sulabh.katila\\source\\repos\\glshare\\Tests\\API"
+admin_info = f"{root_root}\\AdminInfo"
+approval_links = f"{root_root}\\ApprovalLinks"
+audit_log = f"{root_root}\\AuditLog"
+download = f"{root_root}\\Download"
+files = f"{root_root}\\Files"
+geolocation = f"{root_root}\\Geolocation"
+
+
 class SwaggerAdder:
     def __init__(self, cs_dir: str):
         self.start_at = cs_dir
@@ -19,7 +35,7 @@ class SwaggerAdder:
             return self.process_file(start_at)
         
         for entry in os.listdir(start_at):
-            self.process_all(os.path.join(self.start_at, entry))
+            self.process_all(os.path.join(start_at, entry))
 
     def process_file(self, file_path):
         print(f"Processing file: {file_path}")
@@ -81,6 +97,14 @@ class SwaggerAdder:
             m = re.match(r"^\s*", line)
             leading_ws = m.group(0) if m else ''
             file = file.replace(line, f"{leading_ws}{attr}\n{line}")
+        
+        if len(changes) > 0:
+            has_swagger_namespace = file.find(SWAGGER_NAMESPACE)
+            has_openapi_namespace = file.find(OPENAPI_NAMESPACE)
+            if has_swagger_namespace == -1:
+                file = SWAGGER_NAMESPACE + "\n" + file
+            if has_openapi_namespace == -1:
+                file = OPENAPI_NAMESPACE + "\n" + file
         
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(file)
@@ -151,8 +175,24 @@ if __name__ == "__main__":
         start_at = "csfiles"
         current_dir = os.path.dirname(os.path.abspath(__file__))
         start_at = os.path.join(current_dir, start_at)
+
     else:
         start_at = sys.argv[1]
+
+        if start_at == "root_root":
+            start_at = root_root
+        elif start_at == "admin_info":
+            start_at = admin_info
+        elif start_at == "approval_links":
+            start_at = approval_links
+        elif start_at == "audit_log":
+            start_at = audit_log
+        elif start_at == "download":
+            start_at = download
+        elif start_at == "files":
+            start_at = files
+        elif start_at == "geolocation":
+            start_at = geolocation
     
     swagger_adder = SwaggerAdder(start_at)
 

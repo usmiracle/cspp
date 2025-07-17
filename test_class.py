@@ -70,10 +70,12 @@ def test_class_environment():
 
 
         assert(len(c.environment.callables) == 4)
-        assert(c.environment.get_method("EndpointWithParameters") is not None)
-        assert(c.environment.get_method("EndpointWithParameters").arity == 2)
+        endpoint_with_params = c.environment.get_method("EndpointWithParameters")
+        assert(endpoint_with_params is not None)
+        assert(isinstance(endpoint_with_params, Types.ExpressionBioledMethod))
+        assert(endpoint_with_params.arity == 2)
         interpreter = Interpreter(c.environment)
-        endpoint_with_parameters_method_call_val = c.environment.get_method("EndpointWithParameters").call(interpreter, [1, 2])
+        endpoint_with_parameters_method_call_val = endpoint_with_params.call(interpreter, [1, 2])
         expected_endpoint_with_parameters = f"{gloabllabshare}/gl-share/api/Admin/users/pricing/1/2"
         assert(endpoint_with_parameters_method_call_val == expected_endpoint_with_parameters)
 
@@ -105,7 +107,7 @@ def test_method_environment():
                 if s.line_number == 27:
                     sharelink = f"{endpoint}/shareGroup.Share.Id/disability"
                     assert(s.evaluated_path == sharelink)
-                    assert(s.request_type == "PATCH")
+                    assert(s.request_type == "Patch")
                     assert(s.expected_code == None)
 
                     assert(s.verify_count_after == 0)
@@ -153,7 +155,7 @@ def test_select_best_send():
 
     assert(send_obj is not None)
     assert(send_obj.expected_code == "200")
-    assert(send_obj.request_type == "GET")
+    assert(send_obj.request_type == "Get")
     assert(send_obj.evaluated_path == f"{endpoint}/shareGroup.Share.Id")
     assert(send_obj.verify_count_after is not None)
     
