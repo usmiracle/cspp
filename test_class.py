@@ -34,15 +34,15 @@ def test_class_environment():
         gloabllabshare = c.environment.get_variable("GlobalLabShare")
         assert(gloabllabshare == "https://qa-share.transperfect.com")
 
+        assert(c.super_class_name == "APITest")
+
         endpoint_method = c.environment.get_method("Endpoint")
         assert(endpoint_method is not None)
         assert(isinstance(endpoint_method, Types.ExpressionBioledMethod))
-        from Interpreter import Interpreter
         interpreter = Interpreter(c.environment)
         endpoint_method_call_val = endpoint_method.call(interpreter, [])
         expected_endpoint = f"{gloabllabshare}/gl-share/api/Admin/share"
         assert(endpoint_method_call_val.strip("\"") == expected_endpoint.strip("\'"))
-
 
         assert(c.attributes == ["[Parallelizable]"])
 

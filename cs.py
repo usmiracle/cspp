@@ -148,6 +148,9 @@ class CSClass(Callable):
         self.source = source
         self.environment = Environment(environment)
         self.attributes = []  # Store class attributes
+        self.super_class_name: str = ""
+
+        self._extract_super_class_name(source)
         
         # Extract attributes first
         self._extract_attributes()
@@ -156,12 +159,28 @@ class CSClass(Callable):
         self._parse_class_members()
     
     def _extract_attributes(self):
-        """Extract attribute_list nodes from the class declaration"""
+        """Extract attribute_list nodes and superclass name from the class declaration"""
         for child in self.node.children:
             if child.type == "attribute_list":
                 attr_text = self.source[child.start_byte:child.end_byte].decode()
                 self.attributes.append(attr_text)
-    
+
+    def _extract_super_class_name(self, source_bytes: bytes):
+        for child in self.node.children:
+            if child.type == "base_list":
+                # base_list: ':' base_type (',' base_type)*
+                for base_child in child.children:
+                    # The first identifier under base_list is usually the superclass
+                    if base_child.type == "identifier" and base_child.text:
+                        self.super_class_name = base_child.text.decode()
+                        return
+                    # Fallback: check for base_type → identifier
+                    if base_child.type == "base_type":
+                        for t in base_child.children:
+                            if t.type == "identifier" and t.text:
+                                self.super_class_name = t.text.decode()
+                                return
+ 
     def _parse_class_members(self):
         """Parse all member_declaration nodes within the class"""
         # Find the class body (member_declaration nodes)
