@@ -5,7 +5,7 @@ public sealed class Admin_Share_ShareLinkId : APITest
 {
     private string Endpoint => $"{GlobalLabShare}/gl-share/api/Admin/share";
 
-    private string EndpointWithShareLink(string shareLink) => $"{Endpoint}/{shareLink}";
+    private string EndpointWithShareLink(string shareLink) => $"{Endpoints}/{shareLink}";
 
     [Test]
     [Data.SetUp(Tokens.TokenAdminAPI, Shares.KkomradeNoMessage)]

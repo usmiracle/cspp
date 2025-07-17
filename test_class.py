@@ -84,14 +84,22 @@ def test_method_environment():
                 assert(is_test)
 
 
-            endpoint = m.environment.get_variable("Endpoint")
+            endpoint = m.environment.get_variable("Endpoints")
             for s in m.send_functions:
-                if s.line_number == 18:
-                    pass
+                if s.line_number == 27:
+                    sharelink = f"{endpoint}/shareGroup.Share.Id/disability"
+                    print(s.evaluated_path)
+                    print(sharelink)
+                    assert(s.evaluated_path == sharelink)
+                    assert(s.request_type == "Patch")
+                    assert(s.expected_code == "200")
+                    assert(s.verify_count_after == 3)
+
                     #assert(s.endpoint )
     assert(methods_seen == total_methods)
 
 
+print("Starting tests")
 test_global_environment(global_env)
 test_class_environment()
 test_method_environment()
