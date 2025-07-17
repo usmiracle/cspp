@@ -1,12 +1,12 @@
 using TransPerfect.Automation.Framework;
-
 [Parallelizable]
 public sealed class Admin_Share_ShareLinkId : APITest
 {
+    public static int DefaultPageNumber { get; set; } = 1;
+    public static int DefaultPageSize { get; set; } = 50;
     private string Endpoint => $"{GlobalLabShare}/gl-share/api/Admin/share";
     private string EndpointWithShareLink(string shareLink) => $"{Endpoint}/{shareLink}";
     private string EndpointWithParameters(int pageNumber, int pageSize) => $"{GlobalLabShare}/gl-share/api/Admin/users/pricing/{pageNumber}/{pageSize}";
-
     [Test]
     [Data.SetUp(Tokens.TokenAdminAPI, Shares.KkomradeNoMessage)]
     [Recycle(Recycled.TokenAdminAPI)]

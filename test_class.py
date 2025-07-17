@@ -157,9 +157,36 @@ def test_select_best_send():
     print("ending test_select_best_send")
 
 
+def test_method_environment_2():
+    test_global_environment(global_env)
+    gloabllabshare = cs_classes[0].environment.get_variable("GlobalLabShare")
+
+
+    for c in cs_classes:
+        print("Testing Admin_User_Pricing")
+        default_page_number = c.environment.get_variable("DefaultPageNumber")
+        print("Default page number is", default_page_number)
+        default_page_size = c.environment.get_variable("DefaultPageSize")
+        print("Default page size is", default_page_size)
+        assert(default_page_number == 1)
+        assert(default_page_size == 50)
+        print("Default page number and size are correct")
+
+
+            
+        endpointwithparams = c.environment.get_method("EndpointWithParameters")
+        assert(endpointwithparams is not None)
+        assert(endpointwithparams.arity == 2)
+        interpreter = Interpreter(c.environment)
+        endpoint_with_parameters_method_call_val = endpointwithparams.call(interpreter, [1, 2])
+        expected_endpoint_with_parameters = f"{gloabllabshare}/gl-share/api/Admin/users/pricing/1/2"
+        assert(endpoint_with_parameters_method_call_val == expected_endpoint_with_parameters)
+
+
 test_global_environment(global_env)
 test_class_environment()
 test_method_environment()
 test_path_to_var()
 test_path_resolver()
 test_select_best_send()
+test_method_environment_2()
