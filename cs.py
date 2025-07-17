@@ -380,7 +380,7 @@ class CSMethod(Callable):
         self.environment = environment
         self.attributes = []  # Store method attributes
         self.method_environment = Environment(environment)  # Method-specific environment
-        self.send_functions = []  # Store Send function objects
+        self.send_functions: list[Send] = []  # Store Send function objects
         
         # Extract attributes
         self._extract_attributes()

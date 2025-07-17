@@ -84,9 +84,10 @@ def test_method_environment():
                 assert(is_test)
 
 
+            endpoint = m.environment.get_variable("Endpoint")
             for s in m.send_functions:
-                print(s)
-                
+                if s.line_number == 18:
+                    assert(s.endpoint )
     assert(methods_seen == total_methods)
 
 

@@ -205,8 +205,31 @@ class Send:
     def _parse_path(self, content: str):
         """Extract the path from To() argument"""
         try:
-            # Look for .To(...) and extract the argument
-            # Handle multi-line patterns and complex arguments
+            # Look for .To(...) and extract the argument using balanced parentheses parsing
+            to_start = content.find('.To(')
+            if to_start != -1:
+                start_pos = to_start + 4
+                depth = 1
+                path_content = []
+                
+                while start_pos < len(content) and depth > 0:
+                    if content[start_pos] == '(':
+                        depth += 1
+                    elif content[start_pos] == ')':
+                        depth -= 1
+                        if depth == 0:
+                            break
+                    path_content.append(content[start_pos])
+                    start_pos += 1
+                
+                if depth == 0:
+                    path_arg = ''.join(path_content).strip()
+                    # Clean up the path argument (remove extra whitespace, newlines)
+                    path_arg = re.sub(r'\s+', ' ', path_arg)
+                    self.path = path_arg
+                    return
+            
+            # Fallback to regex for simpler cases
             to_match = re.search(r'\.\s*To\s*\(\s*([^)]+(?:\([^)]*\)[^)]*)*)\s*\)', content, re.DOTALL)
             if to_match:
                 path_arg = to_match.group(1).strip()
