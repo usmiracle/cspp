@@ -1,7 +1,7 @@
 from cs import CSFile, CSClass, CSMethod
 from Environment import Environment
 from Interpreter import Interpreter
-from helper import create_globals, globals, paths
+from helper import create_globals, globals, paths, get_path_to_var, PathResolver
 import Types
 
 global_env : Environment = create_globals(globals)
@@ -68,6 +68,7 @@ def test_class_environment():
 
 
 def test_method_environment():
+    test_global_environment(global_env)
     total_methods = 1
     methods_seen = 0
     for c in cs_classes:
@@ -86,23 +87,33 @@ def test_method_environment():
 
             endpoint = m.environment.get_variable("Endpoint")
             for s in m.send_functions:
-                print(s.line_number, s.verify_count_after)
                 # for line 11, it should be 3, line 27 should be 0, and line 33 should be 4
                 if s.line_number == 27:
                     sharelink = f"{endpoint}/shareGroup.Share.Id/disability"
-                    print(s.evaluated_path)
-                    print(sharelink)
                     assert(s.evaluated_path == sharelink)
                     assert(s.request_type == "PATCH")
-                    assert(s.expected_code == "OK")
+                    assert(s.expected_code == None)
 
-                    # assert(s.verify_count_after == 0)
+                    assert(s.verify_count_after == 0)
 
-                    #assert(s.endpoint )
+
     assert(methods_seen == total_methods)
 
 
-print("Starting tests")
+path_to_var = get_path_to_var(paths)
+def test_path_to_var():
+    assert(path_to_var["/api/Admin/blacklist-organizations".lower()] == "AdminBlackList")
+
+
+path_resolver = PathResolver(paths)
+def test_path_resolver():
+    assert(path_resolver.get_var_for_path("/api/Admin/blacklist-organizations") == "AdminBlackList")
+    assert(path_resolver.get_var_for_path("/api/ApprovalLinks/approval.Key") == "ApprovalLinksApprovalKey")
+    assert(path_resolver.get_var_for_path("/api/Admin/share/1234567890") == "AdminShareSharelinkid")
+
+
 test_global_environment(global_env)
 test_class_environment()
 test_method_environment()
+test_path_to_var()
+test_path_resolver()

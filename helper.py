@@ -184,11 +184,14 @@ def get_path_to_var(globals_str: str) -> dict:
             continue
         var_name, value = line.split('=', 1)
         var_name = var_name.strip()
-        value = value.strip()
+        value = value.strip().rstrip(';').strip().strip('"')
+
         # Remove surrounding quotes if present
         if value.startswith('"') and value.endswith('"'):
             value = value[1:-1]
-        path_map[value] = var_name
+
+        var_name = var_name.split(" ")[3].strip()
+        path_map[value.lower()] = var_name
     return path_map
 
 class PathResolver:

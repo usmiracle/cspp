@@ -401,6 +401,7 @@ class CSMethod(Callable):
         for stmt_node in self.iterate_statements():
             # Look for invocation_expression nodes that might be Send calls
             self._find_send_calls_in_node(stmt_node)
+
         # After all Send nodes are found, count Verify statements after each
         self._count_verify_statements_after_send()
 
@@ -409,13 +410,14 @@ class CSMethod(Callable):
         if not self.send_functions:
             return
         # Get the method source lines
-        method_lines = self.source[self.node.start_byte:self.node.end_byte].decode().split('\n')
+        method_lines = self.source[0:self.node.end_byte].decode().split('\n')
         # Map: line number (1-based, relative to method start) -> Send object
         send_line_numbers = [(send.line_number, send) for send in self.send_functions]
         send_line_numbers.sort(key=lambda x: x[0])  # ascending order by line number
         # For each Send, count Verify statements after it
         for idx, (send_line, send_obj) in enumerate(send_line_numbers):
             # Determine the end line: next Send or end of method
+            
             if idx + 1 < len(send_line_numbers):
                 end_line = send_line_numbers[idx + 1][0]
             else:
@@ -440,7 +442,13 @@ class CSMethod(Callable):
         if self._is_send_call(node):
             try:
                 send_obj = Send(node, self.source, self.method_environment)
-                self.send_functions.append(send_obj)
+                exists = False
+                for _send in self.send_functions:
+                    if _send.line_number == send_obj.line_number:
+                        exists = True
+                        break
+                if not exists:
+                    self.send_functions.append(send_obj)
             except Exception as e:
                 print(f"Debug: Error parsing Send function: {e}")
         
