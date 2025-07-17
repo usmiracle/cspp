@@ -72,7 +72,9 @@ class SwaggerAdder:
 
                 op_type = send_obj.get_request_type()
                 resp_code = send_obj.expected_code
-                assert op_type is not None
+                if op_type is None:
+                    print("NO OPERATION TYPE FOUND FOR METHOD", method.name, "IN FILE", file_path)
+                    continue
                 swagger_attr = f"[Swagger(Path = Paths.{path_var}, Operation = OperationType.{op_type.capitalize()}, ResponseCode = {resp_code})]"
                 # Insert above method declaration
                 method_line = self.find_method_declaration_line(lines, method.name)

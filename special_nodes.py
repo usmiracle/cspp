@@ -93,7 +93,7 @@ def extract_method_argument(content: str, method_name: str) -> Optional[str]:
 class Send:
     """
     A class that represents a C# Send function call.
-    Parses Send(Post(...).To(...)) or Send(Put(...).To(...)) or Send(Get().To(...))
+    Parses Send(Post(...).To(...)) or Send(Put(...).To(...)) or Send(Get().To(...)) or Send(Head(...).To(...))
     and extracts the REQUEST_TYPE and PATH.
     """
     
@@ -151,8 +151,8 @@ class Send:
     def _parse_new_style(self, content: str) -> bool:
         """Try to parse new style: Get(path), Post(obj).To(path), etc. Returns True if successful."""
         try:
-            # Try to match HTTP methods: Get, Post, Put, Delete, Patch
-            method_names = ['Get', 'Post', 'Put', 'Delete', 'Patch']
+            # Try to match HTTP methods: Get, Post, Put, Delete, Patch, Head
+            method_names = ['Get', 'Post', 'Put', 'Delete', 'Patch', 'Head']
             
             for method_name in method_names:
                 # First, check if this method exists in the content
@@ -177,7 +177,7 @@ class Send:
                         
                         # For Post(obj), Put(obj), Patch(data), etc., path may not be present directly
                         # But for new style, if argument looks like a path, use it
-                        if self.request_type in ['DELETE', 'PATCH', 'PUT', 'POST']:
+                        if self.request_type in ['DELETE', 'PATCH', 'PUT', 'POST', 'HEAD']:
                             self.path = cleaned_arg
                             return True
             
@@ -187,13 +187,13 @@ class Send:
             return False
     
     def _parse_request_type(self, content: str):
-        """Extract the request type (Post/Put/Get) from the content"""
+        """Extract the request type (Post/Put/Get/Delete/Patch/Head) from the content"""
         try:
             # Look for Post(...), Put(...), or Get(...)
             # Handle both single-line and multi-line patterns
             # Also handle generic types like Post<List<Recipient>>
             # Use a simpler approach - just look for the HTTP method name
-            request_match = re.match(r'(Post|Put|Get|Delete|Patch)', content.strip(), re.IGNORECASE)
+            request_match = re.match(r'(Post|Put|Get|Delete|Patch|Head)', content.strip(), re.IGNORECASE)
             if request_match:
                 self.request_type = request_match.group(1).upper()
             else:
@@ -243,7 +243,7 @@ class Send:
             print(f"Debug: Error parsing path: {e}")
     
     def get_request_type(self) -> Optional[str]:
-        """Get the request type (POST, PUT, GET, DELETE, PATCH)"""
+        """Get the request type (POST, PUT, GET, DELETE, PATCH, HEAD)"""
         return self.request_type
     
     def get_path(self) -> Optional[str]:
