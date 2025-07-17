@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any
-from Types import Callable
+from Types import Callable, ExpressionBioledMethod
 
 class Environment:
     """
@@ -34,6 +34,10 @@ class Environment:
     
     def define_method(self, name: str, method: Callable):
         self.callables[name] = method
+        if method.arity == 0 and isinstance(method, ExpressionBioledMethod):
+            # if the method has no arguments, it is could be seen as a variable
+            from Interpreter import Interpreter
+            self.define_variable(name, method.call(Interpreter(self), []))
 
     def get_method(self, name: str):
         if name in self.callables:

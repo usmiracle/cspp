@@ -15,9 +15,9 @@ def test_global_environment(env: Environment):
     assert(env.get_variable("RecipientsRecentAPI") == "/api/Recipients/recent")
     assert(env.get_variable("RecipientsSearchEmailsAPI") == "/api/Recipients/search-emails")
     assert(env.get_variable("RecipientsSearchQueryAPI") == "/api/Recipients/search-query")
-    print(f"Global environment test passed")
 
 cs_file: CSFile | None= None
+cs_classes: list[CSClass] = []
 def test_class_environment():
     total_classes = 1
     with open("testfile.cs", "r") as file:
@@ -29,12 +29,14 @@ def test_class_environment():
     test_global_environment(global_env)
     for c in cs_file.get_classes():
         classes_seen += 1
+        cs_classes.append(c)
 
         assert(c.name == "Admin_Share_ShareLinkId")
         gloabllabshare = c.environment.get_variable("GlobalLabShare")
         assert(gloabllabshare == "https://qa-share.transperfect.com")
 
         assert(c.super_class_name == "APITest")
+
 
         endpoint_method = c.environment.get_method("Endpoint")
         assert(endpoint_method is not None)
@@ -44,14 +46,50 @@ def test_class_environment():
         expected_endpoint = f"{gloabllabshare}/gl-share/api/Admin/share"
         assert(endpoint_method_call_val.strip("\"") == expected_endpoint.strip("\'"))
 
+
+        endpoint_with_share_link_method = c.environment.get_method("EndpointWithShareLink")
+        assert(endpoint_with_share_link_method is not None)
+        assert(isinstance(endpoint_with_share_link_method, Types.ExpressionBioledMethod))
+        assert(endpoint_with_share_link_method.arity == 1)
+        interpreter = Interpreter(c.environment)
+        share_link = "1234567890"
+        endpoint_with_share_link_method_call_val = endpoint_with_share_link_method.call(interpreter, [share_link])
+        expected_endpoint_with_share_link = f"{gloabllabshare}/gl-share/api/Admin/share/{share_link}"
+        assert(endpoint_with_share_link_method_call_val.strip("\"") == expected_endpoint_with_share_link.strip("\'"))
+
+
         assert(c.attributes == ["[Parallelizable]"])
 
-        print(len(c.environment.callables.values()))
+
         assert(len(c.environment.callables) == 3)
-        assert(c)
+
 
     assert(classes_seen == total_classes)
 
 
+def test_method_environment():
+    total_methods = 1
+    methods_seen = 0
+    for c in cs_classes:
+        if c.name == "Admin_Share_ShareLinkId":
+            for m in c.get_test_methods():
+                methods_seen += 1
+
+
+                is_test = False
+                for attr in m.attributes:
+                    if "Test" in attr:
+                        is_test = True
+                        break
+                assert(is_test)
+
+
+            for s in m.send_functions:
+                print(s)
+                
+    assert(methods_seen == total_methods)
+
+
 test_global_environment(global_env)
 test_class_environment()
+test_method_environment()

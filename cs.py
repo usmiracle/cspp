@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import tree_sitter_c_sharp as tscs
 import re
 
 from Interpreter import Interpreter
-from Types import Callable
+from Types import Callable, ExpressionBioledMethod
 from collections.abc import Iterator
 from tree_sitter import Language, Parser, Tree, Node
 from Environment import Environment
@@ -356,6 +358,11 @@ class CSClass(Callable):
                 'type': param_type or 'object'
             }
         return None
+
+    def get_test_methods(self) -> Iterator['CSMethod']:
+        for method in self.environment.callables.values():
+            if isinstance(method, CSMethod) and not isinstance(method, ExpressionBioledMethod):
+                yield method
 
     def get_class_environment(self) -> Environment:
         """Get the class-specific environment containing variables and methods"""
