@@ -1,5 +1,5 @@
 from tree_sitter import Node
-from typing import Optional
+from typing import Optional, Any
 
 import re
 from Interpreter import Interpreter
@@ -107,7 +107,7 @@ class Send:
         self.raw_text = None  # Store the raw text for debugging
         self.line_number = node.start_point[0] + 1  # 1-based line number
         self.verify_count_after = 0  # Number of Verify statements after this Send
-        self.expected_code = None  # Expected response code after this Send
+        self.expected_code: Any = None  # Expected response code after this Send
         # Parse the Send function
         self._parse_send_function()
     
