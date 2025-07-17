@@ -30,6 +30,7 @@ class Environment:
         elif self.enclosing is not None:
             return self.enclosing.get_variable(name)
         else:
+            pass
             raise Exception(f"Variable {name} not found")
     
     def define_method(self, name: str, method: Callable):
@@ -45,6 +46,7 @@ class Environment:
         elif self.enclosing is not None:
             return self.enclosing.get_method(name)
         else:
+            pass
             raise Exception(f"Method {name} not found")
     
     def define_class(self, name: str, _class: Callable):

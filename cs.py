@@ -159,6 +159,7 @@ class CSClass(Callable):
         
         # Parse class members
         self._parse_class_members()
+        self._parse_class_members()
     
     def _extract_attributes(self):
         """Extract attribute_list nodes and superclass name from the class declaration"""
