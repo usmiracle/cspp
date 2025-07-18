@@ -108,6 +108,7 @@ class Send:
         self.line_number = node.start_point[0] + 1  # 1-based line number
         self.verify_count_after = 0  # Number of Verify statements after this Send
         self.expected_code: Any = None  # Expected response code after this Send
+        self.default_response_code: str = "200"
         # Parse the Send function
         self._parse_send_function()
     

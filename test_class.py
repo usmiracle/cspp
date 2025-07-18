@@ -192,12 +192,12 @@ def test_method_environment_2():
 
 
 test_global_environment(global_env)
-# test_class_environment()
-# test_method_environment()
-# test_path_to_var()
-# test_path_resolver()
-# test_select_best_send()
-# test_method_environment_2()
+test_class_environment()
+test_method_environment()
+test_path_to_var()
+test_path_resolver()
+test_select_best_send()
+test_method_environment_2()
 
 
 def test_failing():
@@ -235,5 +235,52 @@ def test_interpreter():
             interpreter = Interpreter(c.environment)
             endpoint = m.environment.get_variable("endpoint")
             assert(endpoint == "https://qa-share.transperfect.com/gl-share/api/Admin/sharesdlfk")
+
+def test_failing_test():
+    source = """
+namespace Tests.API.GeoLocation;
+
+[Parallelizable(ParallelScope.All)]
+[ReadFrom(
+    "DataProviders/{env}env.json",
+    "DataProviders/Tokens/{env}.json"
+)]
+public sealed class StorageRegion : APITest
+{
+    [Test]
+    [Data.SetUp(Tokens.TokenClientAPI)]
+    [Recycle(Recycled.TokenClientAPI)]
+    public void GET_Geolocation_StorageRegion_200_72847()
+    {
+        var token = Get<Token>(Tokens.TokenClientAPI);
+        Session = token.Session;
+
+        Send(Get($"{GeoLocation}/storage-region" + APIVersion) with
+        { Authorization = Bearer(token.AccessToken) });
+
+        Verify(Response.Content.As<string>(SerializationFormat.Text)).Is("US");
+    }
+}
+
+    """
+    cs_file = CSFile(source, global_env)
+    path_resolver = PathResolver(paths)
+
+    for c in cs_file.get_classes():
+        gloabllabshare = c.environment.get_variable("GlobalLabShare")
+        for m in c.get_test_methods():
+            for s in m.send_functions:
+                assert(s.default_response_code == "200")
+                assert(s.expected_code == None)
+                assert(s.verify_count_after == 1)
+                assert(s.request_type is not None)
+                assert(s.request_type.capitalize() == "Get")
+                assert(s.evaluated_path is not None)
+                assert(s.evaluated_path.startswith(f"/api/GeoLocation/storage-region"))
+                
+
+
+test_failing_test()
+
 
 test_interpreter()

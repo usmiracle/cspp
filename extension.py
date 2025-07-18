@@ -75,16 +75,22 @@ class SwaggerAdder:
                 if op_type is None:
                     print("NO OPERATION TYPE FOUND FOR METHOD", method.name, "IN FILE", file_path)
                     continue
-                swagger_attr = f"[Swagger(Path = Paths.{path_var}, Operation = OperationType.{op_type.capitalize()}, ResponseCode = {resp_code})]"
-                # Insert above method declaration
-                method_line = self.find_method_declaration_line(lines, method.name)
+                
+                if resp_code is None:
+                    resp_code = send_obj.default_response_code
 
-                assert(method_line is not None)
-                # change this
-                line_changes.append([method_line, swagger_attr])
-                changes.append(f"{method.name}: {swagger_attr}")
+                if path_var is not None and path_var != "None":
+                    swagger_attr = f"[Swagger(Path = Paths.{path_var}, Operation = OperationType.{op_type.capitalize()}, ResponseCode = {resp_code})]"
+                    # Insert above method declaration
+                    method_line = self.find_method_declaration_line(lines, method.name)
 
-        self.insert_swagger_attribute(file_path, line_changes)
+                    assert(method_line is not None)
+                    # change this
+                    line_changes.append([method_line, swagger_attr])
+                    changes.append(f"{method.name}: {swagger_attr}")
+
+        if len(line_changes) > 0:
+            self.insert_swagger_attribute(file_path, line_changes)
 
         if changes:
             return ('\n'.join(lines), changes)
@@ -94,7 +100,7 @@ class SwaggerAdder:
     def insert_swagger_attribute(self, filename: str, changes: list[list[str]]):
         with open(filename, 'r', encoding='utf-8') as f:
             file = f.read()
-
+        
         for line, attr in changes:
             # Get leading whitespace from the original line
             m = re.match(r"^\s*", line)

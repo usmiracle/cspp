@@ -386,6 +386,7 @@ class CSMethod(Callable):
         self.attributes = []  # Store method attributes
         self.method_environment = Environment(environment)  # Method-specific environment
         self.send_functions: list[Send] = []  # Store Send function objects
+        self.default_response_code = self._get_default_response_code()
         
         # Extract attributes
         self._extract_attributes()
@@ -393,6 +394,26 @@ class CSMethod(Callable):
         self._parse_method_variables()
         # Parse Send function calls
         self._parse_send_functions()
+    
+    def _get_default_response_code(self):
+        """Get the default response code for the method from the name of the method"""
+        # GET_AdminBlacklist_NoAuth_401_106508
+        # POST_AdminBlacklist_NoAuth_201_106509
+
+        last_underscore_idx = self.name.rfind('_')
+        if last_underscore_idx == -1:
+            return "200"
+
+        second_last_underscore_idx = self.name.rfind('_', 0, last_underscore_idx)
+        if second_last_underscore_idx == -1:
+            return "200"
+        
+        response_code = self.name[second_last_underscore_idx + 1:last_underscore_idx]
+        if response_code.isdigit():
+            return response_code
+        
+        return "200"
+
     
     def _extract_attributes(self):
         """Extract attribute_list nodes from the method declaration"""
@@ -473,6 +494,7 @@ class CSMethod(Callable):
                         exists = True
                         break
                 if not exists:
+                    send_obj.default_response_code = self.default_response_code
                     self.send_functions.append(send_obj)
             except Exception as e:
                 print(f"Debug: Error parsing Send function: {e}")
