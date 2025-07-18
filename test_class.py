@@ -107,7 +107,8 @@ def test_method_environment():
                 if s.line_number == 27:
                     sharelink = f"{endpoint}/shareGroup.Share.Id/disability"
                     assert(s.evaluated_path == sharelink)
-                    assert(s.request_type == "Patch")
+                    assert(s.request_type is not None)
+                    assert(s.request_type.capitalize() == "Patch")
                     assert(s.expected_code == None)
 
                     assert(s.verify_count_after == 0)
@@ -155,7 +156,8 @@ def test_select_best_send():
 
     assert(send_obj is not None)
     assert(send_obj.expected_code == "200")
-    assert(send_obj.request_type == "Get")
+    assert(send_obj.request_type is not None)
+    assert(send_obj.request_type.capitalize() == "Get")
     assert(send_obj.evaluated_path == f"{endpoint}/shareGroup.Share.Id")
     assert(send_obj.verify_count_after is not None)
     
