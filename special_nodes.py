@@ -151,8 +151,8 @@ class Send:
     def _parse_new_style(self, content: str) -> bool:
         """Try to parse new style: Get(path), Post(obj).To(path), etc. Returns True if successful."""
         try:
-            # Try to match HTTP methods: Get, Post, Put, Delete, Patch, Head
-            method_names = ['Get', 'Post', 'Put', 'Delete', 'Patch', 'Head']
+            # Try to match HTTP methods: Get, Post, Put, Delete, Patch, Head, Options
+            method_names = ['Get', 'Post', 'Put', 'Delete', 'Patch', 'Head', 'Options']
             
             for method_name in method_names:
                 # First, check if this method exists in the content
@@ -187,13 +187,13 @@ class Send:
             return False
     
     def _parse_request_type(self, content: str):
-        """Extract the request type (Post/Put/Get/Delete/Patch/Head) from the content"""
+        """Extract the request type (Post/Put/Get/Delete/Patch/Head/Options) from the content"""
         try:
             # Look for Post(...), Put(...), or Get(...)
             # Handle both single-line and multi-line patterns
             # Also handle generic types like Post<List<Recipient>>
             # Use a simpler approach - just look for the HTTP method name
-            request_match = re.match(r'(Post|Put|Get|Delete|Patch|Head)', content.strip(), re.IGNORECASE)
+            request_match = re.match(r'(Post|Put|Get|Delete|Patch|Head|Options)', content.strip(), re.IGNORECASE)
             if request_match:
                 self.request_type = request_match.group(1).upper()
             else:

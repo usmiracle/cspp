@@ -196,3 +196,21 @@ test_path_to_var()
 test_path_resolver()
 test_select_best_send()
 test_method_environment_2()
+
+
+def test_failing():
+    with open("failing.cs", "r") as file:
+        cs_file_content = file.read()
+
+    cs_file = CSFile(cs_file_content, global_env)
+    for c in cs_file.get_classes():
+        for m in c.get_test_methods():
+            for s in m.send_functions:
+                print(s.evaluated_path)
+                print(s.request_type)
+                print(s.line_number)
+                print(s.raw_text)
+                break
+        break
+
+test_failing()
