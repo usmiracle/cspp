@@ -21,9 +21,6 @@ class Interpreter:
         
         expression = expression.strip()
 
-        # Handle string interpolation: $"Hello {name}!"
-        if expression.startswith('$"') and expression.endswith('"'):
-            return Interpreter._resolve_string_interpolation(expression, environment)
         
         # Handle function/method call: Foo("bar") or Foo(a, "bar")
         func_call_match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_]*)\((.*)\)$', expression)
@@ -48,6 +45,10 @@ class Interpreter:
         if '+' in expression:
             return Interpreter._resolve_string_concatenation(expression, environment)
         
+        # Handle string interpolation: $"Hello {name}!"
+        if expression.startswith('$"') and expression.endswith('"'):
+            return Interpreter._resolve_string_interpolation(expression, environment)
+
         # Handle simple variable reference: a
         if Interpreter._is_simple_identifier(expression):
             return Interpreter._resolve_variable_reference(expression, environment)
@@ -153,7 +154,8 @@ class Interpreter:
             part = part.strip()
             if not part:
                 continue
-            
+            if part.startswith('$"') and part.endswith('"'):
+                part = Interpreter._resolve_string_interpolation(part, environment)
             # Resolve each part
             resolved_part = Interpreter.evaluate(None, part, environment)
             # Remove quotes if it's a string literal

@@ -234,7 +234,6 @@ def test_interpreter():
             # check endpoint is evaluated correctly
             interpreter = Interpreter(c.environment)
             endpoint = m.environment.get_variable("endpoint")
-            print(endpoint)
             assert(endpoint == "https://qa-share.transperfect.com/gl-share/api/Admin/sharesdlfk")
 
 test_interpreter()
