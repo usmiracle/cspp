@@ -173,6 +173,8 @@ class SwaggerAdder:
 
 if __name__ == "__main__":
     import sys
+    import makepaths
+
     if len(sys.argv) < 2:
         # start_at = "testfile.cs"
         start_at = "csfiles"

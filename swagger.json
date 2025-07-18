@@ -1,0 +1,3998 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "GL Share API 1.0",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "/gl-share"
+    }
+  ],
+  "paths": {
+    "/api/Admin/info": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Gets user information to be preloaded on Share Admin page [Authorized for Admins only]",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/share/{shareLinkId}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Gets information of a Share based on the shareLinkId [Authorized for Admins only]",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/share/{shareLinkId}/disability": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Toggles a shares disability [Authorized for Admins only]",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/share/{shareLinkId}/recipients": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Adds recipients to a share [Authorized for Admins only]",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EmailRecipient"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EmailRecipient"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EmailRecipient"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EmailRecipient"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/service/registration": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Creates a registration link for a recipient of a Share if they do not yet exist on IdP. If user exists on IdP, this endpoint adds GLShare client to IdP user's list of clients [Authorized for Patents-service user only]",
+        "description": "Themes:\n\np = patents, s = share, t = transport\n\n---\n\nPricingTypeId is required. PricingTypeIds:\n            \n1 = Free, 2 = Pro, 3 = InternalPlus, 4 = ExternalPlus\n            \nNote: InternalPlus or ExternalPlus pricing types should be considered invalid pricing types for registration",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAccountRegistrationLinkRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAccountRegistrationLinkRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAccountRegistrationLinkRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAccountRegistrationLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns registrationLinkId if user does not exist in IdP"
+          },
+          "204": {
+            "description": "If user exists in IdP. If they do not yet have access to GLShare client, endpoint adds GLShare client to IdP user's list of clients"
+          },
+          "404": {
+            "description": "If provided shareLinkId is not found"
+          }
+        }
+      }
+    },
+    "/api/Admin/users/pricing/{pageNumber}/{pageSize}": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Returns a list of all users with their pricing types [Authorized for Admins only]",
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/user/internal/pricing": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Updates internal user's pricing type [Authorized for Admins only]",
+        "description": "Pricing Type Ids:\n            \n1 - Free\n            \n2 - Pro\n            \n3 - InternalPlus\n            \n4 - ExternalPlus\n            \nNote:\n            \n- An internal user should never have a trial.\n            \n- Internal users will always be either Pro or Internal Plus.\n            \n- InternalPlus pricing type can only be assigned to internal users.\n            \n- ExternalPlus pricing type can only be assigned to external users.",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInternalUserPricingModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInternalUserPricingModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInternalUserPricingModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInternalUserPricingModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/user/external/pricing": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Updates an external user's pricing type and allows giving a trial to a user who has FREE or PRO pricing type [Authorized for Admins only]",
+        "description": "Pricing Type Ids:\n            \n1 - Free\n            \n2 - Pro\n            \n3 - InternalPlus\n            \n4 - ExternalPlus\n            \nNote:\n            \nEnabling trials for the following ids should result in the following trial tiers:\n1 + trial = Pro trial,\n2 + trial = Pro trial,\n4 + trial = Pro+\n            \n- InternalPlus pricing type can only be assigned to internal users.\n            \n- ExternalPlus pricing type can only be assigned to external users.\n            \n- Trials can only be assigned on pricing types Free, Pro and ExternalPlus.\n            \n- TrialEndDate is a UTC Date Time string that sets the end date of the trial, defaults to 30 days from now",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExternalUserPricingModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExternalUserPricingModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExternalUserPricingModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExternalUserPricingModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/user/subscriptions/trial": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Creates trial subscriptions for users who failed to register successfully [Authorized for Admins only]",
+        "requestBody": {
+          "description": "A list of emails of the users who failed to register successfully",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/user/pricing": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Returns a list of all pricing types [Authorized for Admins only]",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Admin/blacklist-organizations": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Adds / removes an organization from blacklist organizations [Authorized for Admins only]",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBlacklistOrgsModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBlacklistOrgsModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBlacklistOrgsModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBlacklistOrgsModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Returns a list of blacklist organizations [Authorized for Admins only]",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ApprovalLinks": {
+      "post": {
+        "tags": [
+          "ApprovalLinks"
+        ],
+        "summary": "Creates an approval link. [This endpoint can only be used to request access for yourself for a Restricted Share]",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestAccessForYourselfModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestAccessForYourselfModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestAccessForYourselfModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestAccessForYourselfModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ApprovalLinks/{approvalKey}": {
+      "patch": {
+        "tags": [
+          "ApprovalLinks"
+        ],
+        "summary": "Approves / denies access to a Share for the requestor",
+        "description": "StatusId: What the status of the approval should be changed to\n\n1 = Pending,\n2 = Approved,\n3 = Denied",
+        "parameters": [
+          {
+            "name": "approvalKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareAccessStatusModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareAccessStatusModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareAccessStatusModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareAccessStatusModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AuditLog/{shareLinkId}": {
+      "get": {
+        "tags": [
+          "AuditLog"
+        ],
+        "summary": "Gets audit logs for a specific Share",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/BlacklistOrganizations/verify-user-org/{email}": {
+      "head": {
+        "tags": [
+          "BlacklistOrganizations"
+        ],
+        "summary": "Verifies by email whether an organization is blacklisted or not",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "An email address",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Config": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "Gets configuration values",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Download/signed-key/{shareLinkId}": {
+      "post": {
+        "tags": [
+          "Download"
+        ],
+        "summary": "Generates a signed key for public file downloads via CaRFS",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "Share id of the file path(s)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/EULA/latest": {
+      "get": {
+        "tags": [
+          "EULA"
+        ],
+        "summary": "Gets latest EULA",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Files/a2a/file-types": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Gets a list of supported file types for conversion to WEBP via A2A",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Files/a2a/file-preview-info": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Gets file preview information",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Files/a2a/{shareLinkId}/{A2AFileId}/page-count": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Gets page count of file via A2A",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "ID of the Share that the A2AFileId exists in",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "A2AFileId",
+            "in": "path",
+            "description": "A2A File ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Files/{filePath}": {
+      "put": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Uploads a file for an anonymous user",
+        "parameters": [
+          {
+            "name": "filePath",
+            "in": "path",
+            "description": "Encoded file path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Deletes a file for an anonymous user",
+        "parameters": [
+          {
+            "name": "filePath",
+            "in": "path",
+            "description": "Encoded file path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Files/a2a/status/{shareLinkId}/{A2AOperationId}": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Checks the status of an A2A operation",
+        "description": "An operation can be in one of the following states: New, Queued, Processing, Completed, Failed",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "The share link ID that an A2A operationId exists in",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "A2AOperationId",
+            "in": "path",
+            "description": "An A2A operationId on a GL Share file",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Files/folder-content/{shareLinkId}/{folderPath}": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Gets contents of a folder on CaRFS",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "folderPath",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Files/a2a/share-key": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Generates A2A share key for specified fileIds",
+        "requestBody": {
+          "description": "Model for generating share key",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateA2AShareKeyModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateA2AShareKeyModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateA2AShareKeyModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateA2AShareKeyModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Files/a2a/convert": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Attempts to try and convert a pre-existing A2A file - if you have access to the Share that the files belong to",
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/A2AConvertFileRequestModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/A2AConvertFileRequestModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/A2AConvertFileRequestModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/A2AConvertFileRequestModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Files/carfs/anon-share-key": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Generates CaRFS anonymous share key for specified file paths",
+        "requestBody": {
+          "description": "A list of file paths and the location they are being stored in",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnonSignedKeyModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnonSignedKeyModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnonSignedKeyModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnonSignedKeyModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/Files/{shareLinkId}/{filePath}/a2a-file-metadata": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Gets A2A file metadata for provided file path",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "ID of share link",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "filePath",
+            "in": "path",
+            "description": "Double encoded file path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Files/copy-file": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Copies files",
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyFileModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyFileModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyFileModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyFileModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GeoLocation/storage-region": {
+      "get": {
+        "tags": [
+          "GeoLocation"
+        ],
+        "summary": "Gets the suggested storage region code for your public IP address. Defaults to US if no match found.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GeoLocation/ipAddress": {
+      "get": {
+        "tags": [
+          "GeoLocation"
+        ],
+        "summary": "Gets location information about provided IP address",
+        "parameters": [
+          {
+            "name": "ipAddress",
+            "in": "query",
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Log": {
+      "post": {
+        "tags": [
+          "Log"
+        ],
+        "summary": "Posts a internal log",
+        "requestBody": {
+          "description": "Model for creating a log message, requires a valid string Message and LogType. LogType can be 0 = Info, 1 = Warn, 2 = Error 3 = Critical, defaults to 0.",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/MobileApp/register": {
+      "post": {
+        "tags": [
+          "MobileApp"
+        ],
+        "summary": "Registers a user to IdP Manager and adds the user to GLShare database",
+        "requestBody": {
+          "description": "A model containing the registration details to register a user",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PersonalShare": {
+      "post": {
+        "tags": [
+          "PersonalShare"
+        ],
+        "summary": "Creates a personal Share",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiatePersonalShareModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiatePersonalShareModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiatePersonalShareModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiatePersonalShareModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PersonalShare/share-personal-link-email": {
+      "post": {
+        "tags": [
+          "PersonalShare"
+        ],
+        "summary": "Shares a user's personal link to list of emails",
+        "parameters": [
+          {
+            "name": "message",
+            "in": "query",
+            "description": "Message to be attached to email",
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "List of emails to receive the personal link email",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PersonalShare/{shareLinkId}/verify-email": {
+      "patch": {
+        "tags": [
+          "PersonalShare"
+        ],
+        "summary": "Verifies anonymous uploader's email address to complete personal Share creation",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PersonalShare/{metadataId}/email": {
+      "patch": {
+        "tags": [
+          "PersonalShare"
+        ],
+        "summary": "Updates anonymous personal Share metadata email address and sends verification email to complete personal Share creation",
+        "parameters": [
+          {
+            "name": "metadataId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "An email address",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PersonalShare/user/{personalShareUsername}": {
+      "get": {
+        "tags": [
+          "PersonalShare"
+        ],
+        "summary": "Gets user information based on the personal Share username",
+        "parameters": [
+          {
+            "name": "personalShareUsername",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PersonalShare/setup/{personalShareUsername}": {
+      "post": {
+        "tags": [
+          "PersonalShare"
+        ],
+        "summary": "Creates a new random personal Share folder on CaRFS",
+        "parameters": [
+          {
+            "name": "personalShareUsername",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Recipients": {
+      "post": {
+        "tags": [
+          "Recipients"
+        ],
+        "summary": "Searches for a recipient in IdP Manager",
+        "requestBody": {
+          "description": "A model containing the desired query",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Recipients/recent": {
+      "get": {
+        "tags": [
+          "Recipients"
+        ],
+        "summary": "Searches for recipients in recent recipients table, returning up to 15 users",
+        "parameters": [
+          {
+            "name": "recipientCount",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Recipients/search-emails": {
+      "post": {
+        "tags": [
+          "Recipients"
+        ],
+        "summary": "Searches for users in Users table by email address. If no users are found, searches IdP Manager. If user information is not found in either, checks if email address domain is internal",
+        "requestBody": {
+          "description": "A list of emails",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Recipients/search-query": {
+      "get": {
+        "tags": [
+          "Recipients"
+        ],
+        "summary": "Searches for users in Users table by query. If no users are found, searches IdP Manager",
+        "description": "Empty query returns top users from the Users table ordered by id",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "A search query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "The page number to take",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "The number of records to return for a page",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Recipients/verify-user-exists/{email}": {
+      "head": {
+        "tags": [
+          "Recipients"
+        ],
+        "summary": "Verifies if a user exists in IdP Manager or not",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "description": "User's email",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Registration": {
+      "post": {
+        "tags": [
+          "Registration"
+        ],
+        "summary": "Creates a registration link for given email and sends out verification email",
+        "description": "PricingTypeId is required. PricingTypeIds:\n            \n1 = Free, 2 = Pro, 3 = InternalPlus, 4 = ExternalPlus\n            \nNote: Pro, InternalPlus or ExternalPlus pricing types should be considered invalid pricing types for registration",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationLinkRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationLinkRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationLinkRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Registration/{registrationLinkId}": {
+      "get": {
+        "tags": [
+          "Registration"
+        ],
+        "summary": "Gets registration link information based on passed id",
+        "parameters": [
+          {
+            "name": "registrationLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Registration/{registrationLinkId}/register": {
+      "post": {
+        "tags": [
+          "Registration"
+        ],
+        "summary": "Registers a user to IdP Manager and adds the user to GLShare database",
+        "parameters": [
+          {
+            "name": "registrationLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A model containing the registration details to register a user",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Registration/password-policies": {
+      "get": {
+        "tags": [
+          "Registration"
+        ],
+        "summary": "Gets a list of password policies; via IdPManager API",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by name",
+            "schema": {
+              "type": "string",
+              "default": "secure"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Field and direction to sort by. Format: ([+/-]FieldName) By default: +name (sort by email ascending)",
+            "schema": {
+              "type": "string",
+              "default": "+name"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Result range to return. Format: 0-19 (result index from - result index to)",
+            "schema": {
+              "type": "string",
+              "default": "0-19"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Reports": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Generates a report of Shares created during a specific period of time, with option to exclude specific users through userFilter",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsageReportModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsageReportModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsageReportModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsageReportModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Reports/share/{shareLinkId}": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Gets Share information with file history of a specific Share",
+        "description": "The file history is retrieved from CaRFS API",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/setup": {
+      "post": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Creates a new random folder on CaRFS",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/{shareLinkId}": {
+      "options": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Checks if a specific Share is public",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Gets limited information of a Share based on the shareLinkId. Can be called for Shares you have access to but did not create",
+        "description": "This endpoint is still functional but will **no longer be supported**.\n\nPlease use the new v2 endpoint: **GET /api/v2/Shares/{shareLinkId}/limited-info**",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageName",
+            "in": "query",
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share": {
+      "post": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Creates a Share",
+        "description": "The \"storageLocation\" field outside of \"files\" is required only for source \"glshare\"",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateShareModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateShareModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateShareModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateShareModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/{shareLinkId}/create-share-emails": {
+      "post": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Sends create share emails",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseInitiateShareModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseInitiateShareModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseInitiateShareModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseInitiateShareModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/details/{shareLinkId}": {
+      "get": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Gets details of a Share based on shareLinkId. Can only view details of a created Share",
+        "description": "This endpoint is still functional but will **no longer be supported**.\n\nPlease use the new v2 endpoint: **GET /api/v2/Shares/{shareLinkId}/detailed-info**",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageName",
+            "in": "query",
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/{shareLinkId}/files": {
+      "post": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Adds files to Share",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "Id of the share",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "List of files to add",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FileModel"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FileModel"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FileModel"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FileModel"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Deletes files from Share.\nIf deletion successful, deletes files from CaRFS",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "Id of the share",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "List of encoded file paths to delete",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/summary": {
+      "post": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Gets a summarized list of all created Shares that are active",
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "Page number of results",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "The number of results per page",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "createDate, numberOfFiles, access, expiration",
+            "schema": {
+              "type": "string",
+              "default": "createDate"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "asc, desc",
+            "schema": {
+              "type": "string",
+              "default": "desc"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchShareFilterModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchShareFilterModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchShareFilterModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchShareFilterModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/received/summary": {
+      "post": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Gets a summarized list of all received Shares that are active",
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "Page number of results",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "The number of results per page",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "createDate, numberOfFiles, expiration",
+            "schema": {
+              "type": "string",
+              "default": "createDate"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "description": "asc, desc",
+            "schema": {
+              "type": "string",
+              "default": "desc"
+            }
+          },
+          {
+            "name": "onlyPersonalShares",
+            "in": "query",
+            "description": "Whether response should included only personal shares or not",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchReceivedShareFilterModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchReceivedShareFilterModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchReceivedShareFilterModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchReceivedShareFilterModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/forward-share-email": {
+      "post": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Forwards a Share email, gives access to recipients if requesting user has the ability to, otherwise makes access requests",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "query",
+            "description": "Share id of sharelink that is being emailed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "List of emails that are being forwarded to and optional message",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardShareEmailRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardShareEmailRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardShareEmailRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardShareEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Share/edit-share": {
+      "patch": {
+        "tags": [
+          "Share"
+        ],
+        "summary": "Updates Share details",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShareModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShareModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShareModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShareModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ShareActivity/share/{shareLinkId}": {
+      "get": {
+        "tags": [
+          "ShareActivity"
+        ],
+        "summary": "Gets all share activity for a share",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "description": "Share id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ShareActivity/add-shareactivity/{shareLinkId}": {
+      "post": {
+        "tags": [
+          "ShareActivity"
+        ],
+        "summary": "Adds a share activity entry for a share",
+        "description": "actionId:\n            \n1 = Access Share\n            \n2 = Created Share\n            \n3 = Upload File\n            \n4 = Downloaded\n            \n5 = Edit Share - Add File\n            \n6 = Edit Share - Remove File",
+        "parameters": [
+          {
+            "name": "shareLinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ShareActivityModel"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ShareActivityModel"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ShareActivityModel"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ShareActivityModel"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/users/{pageNumber}/{pageSize}": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Searches for a recipient in GL Share database with pageNumber and pageSize",
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "path",
+            "description": "Page number of results",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "path",
+            "description": "The number of results per page",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A model containing the desired query",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipientQueryModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/add-users": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Adds a list of users to the GL Share database",
+        "description": "Note: In the response, the user object for each user that is added, will show initial state with no trial enabled, because trials are added for users on Subscriptions API / Home",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/preferences": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Gets user preferences for a user",
+        "parameters": [
+          {
+            "name": "keyId",
+            "in": "query",
+            "description": "No key = All preferences,\n1 = geo-location\n2 = show-trial-final-days\n3 = show-trial-start\n4 = show-create-share-form-tour\n5 = show-permissions-popover\n6 = show-redesign-update-modal\n7 = show-created-share-details-tour\n8 = show-gl-nav-popover",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Creates / updates a user preference",
+        "description": "keyId: 1 = geo-location, 2 = show-trial-final-days, 3 = show-trial-start, 4 = show-create-share-form-tour, 5 = show-permissions-popover, 6 = show-redesign-update-modal, 7 = show-created-share-details-tour, 8 = show-gl-nav-popover\n            \nvalueId for geo-location: 1 = US, 2 = UK, 3 = AU, 4 = EU\n\nvalueId for all other keyIds: 1 = Yes, 2 = No",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPreferenceRequestModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPreferenceRequestModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPreferenceRequestModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPreferenceRequestModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/preferences/{keyId}": {
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Deletes a user preference",
+        "parameters": [
+          {
+            "name": "keyId",
+            "in": "path",
+            "description": "1 = geo-location\n2 = show-trial-final-days\n3 = show-trial-start\n4 = show-create-share-form-tour\n5 = show-permissions-popover\n6 = show-redesign-update-modal\n7 = show-created-share-details-tour\n8 = show-gl-nav-popover",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/me": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Returns user information and permissions for authenticated user",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/expired-trial": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Updates trial flag if user's trial has expired and downgrades user to Free pricing type",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/accept-terms": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Adds an acceptance record for the current EULA for requesting user",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/subscription/webhook": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Receives real-time Subscription webhook events",
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionWebhookModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionWebhookModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionWebhookModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionWebhookModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/get-started-product-email": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Sends email to user and consulting for getting started with a product",
+        "requestBody": {
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStartedEmailModel"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStartedEmailModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStartedEmailModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetStartedEmailModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Version": {
+      "get": {
+        "tags": [
+          "Version"
+        ],
+        "summary": "Gets version of the api",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "A2AConvertFileRequestModel": {
+        "required": [
+          "a2AFileId",
+          "shareLinkId"
+        ],
+        "type": "object",
+        "properties": {
+          "a2AFileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shareLinkId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AnonSignedKeyModel": {
+        "type": "object",
+        "properties": {
+          "filePaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "storageLocation": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BaseInitiateShareModel": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileModel"
+            },
+            "description": "This would be full of CaRFS file paths when working with GLShare front end\nFrom TransPort this should not be included",
+            "nullable": true
+          },
+          "storageLocation": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "Storage location for files of the share",
+            "nullable": true
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InitiateShareRecipient"
+            },
+            "description": "Users to share with",
+            "nullable": true
+          },
+          "shareKey": {
+            "type": "string",
+            "description": "For TransPort, using the CaRFS share token",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Share notes",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "description": "Source can be 'glshare', 'glsharemobile', 'transport', or 'patents', default: glshare",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean",
+            "description": "Indicating public share, anonymous link"
+          },
+          "expirationDays": {
+            "type": "integer",
+            "description": "Number of days to expire the link in\nIf not passed, defaults to 30 days",
+            "format": "int32"
+          },
+          "projectAInformation": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectAInfoModel"
+            },
+            "description": "ProjectA Job Number and LP",
+            "nullable": true
+          },
+          "patentEmailData": {
+            "$ref": "#/components/schemas/PatentEmailDataModel"
+          },
+          "isRestrictedToOwner": {
+            "type": "boolean",
+            "description": "Sets to true if the file is restricted only to owner"
+          },
+          "sendEmailToSender": {
+            "type": "boolean",
+            "description": "Choice for sending emails to sender"
+          },
+          "sendEmailToRecipients": {
+            "type": "boolean",
+            "description": "Choice for sending emails to recipients"
+          },
+          "canAllRecipientsGrantAccess": {
+            "type": "boolean"
+          },
+          "copiedFromShareLinkId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "title": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Sets optional share title",
+            "nullable": true
+          },
+          "carfsHostUrl": {
+            "type": "string",
+            "description": "For TP / Patents to provide the host CaRFS host URL that they uploaded their files to",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CopyFileModel": {
+        "required": [
+          "filePath",
+          "storageLocation"
+        ],
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "storageLocation": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "newSubfolder": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmailRecipient": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Recipient email address",
+            "nullable": true
+          },
+          "userId": {
+            "type": "integer",
+            "description": "Reference user by Id",
+            "format": "int32",
+            "nullable": true
+          },
+          "sendEmail": {
+            "type": "boolean",
+            "description": "Send email to this recipient flag"
+          },
+          "userWhoAddedRecipient": {
+            "type": "string",
+            "description": "Username of user who added this recipient",
+            "nullable": true
+          },
+          "canGrantOthersAccess": {
+            "type": "boolean",
+            "description": "Can the user grant others Share access"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FileModel": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "CaRFS file path",
+            "nullable": true
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "File size in bytes",
+            "format": "int64"
+          },
+          "fileId": {
+            "type": "string",
+            "description": "Unique file guid - only used by transport currently",
+            "nullable": true
+          },
+          "storageLocation": {
+            "type": "string",
+            "description": "Specifies where the file is stored. Defaults to US",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ForwardShareEmailRequest": {
+        "required": [
+          "recipientsEmails"
+        ],
+        "type": "object",
+        "properties": {
+          "recipientsEmails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "GenerateA2AShareKeyModel": {
+        "required": [
+          "fileIds",
+          "shareLinkId"
+        ],
+        "type": "object",
+        "properties": {
+          "shareLinkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetStartedEmailModel": {
+        "required": [
+          "projectDetails",
+          "userEmailAddress"
+        ],
+        "type": "object",
+        "properties": {
+          "userEmailAddress": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string",
+            "description": "Email address provided by user through FE Get Started form"
+          },
+          "userPhoneNumber": {
+            "type": "string",
+            "description": "Phone number provided by user through FE Get Started form.\nMust be in format: +Country code and phone number.\n+x xxxxxxxxxx OR +x xxx xxx xxxx",
+            "nullable": true
+          },
+          "productName": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "Product name from FE Get Started form. Defaults to 'Portal'",
+            "nullable": true
+          },
+          "projectDetails": {
+            "maxLength": 400,
+            "minLength": 1,
+            "type": "string",
+            "description": "Project details provided by user through FE Get Started form"
+          },
+          "sendEmailToUser": {
+            "type": "boolean",
+            "description": "Optional property for QA to control whether an email is sent to the user"
+          },
+          "sendEmailToConsulting": {
+            "type": "boolean",
+            "description": "Optional property for QA to control whether an email is sent to consulting"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InitiatePersonalShareModel": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileModel"
+            },
+            "description": "This would be full of CaRFS file paths when working with GLShare front end",
+            "nullable": true
+          },
+          "personalShareUsername": {
+            "type": "string",
+            "description": "The personal share username of the receiving user",
+            "nullable": true
+          },
+          "creatorEmailAddress": {
+            "type": "string",
+            "description": "The email address of the personal share creator",
+            "nullable": true
+          },
+          "storageLocation": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "Storage location for files of the share",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Share notes",
+            "nullable": true
+          },
+          "sendEmailToRecipient": {
+            "type": "boolean",
+            "description": "Should an email be sent out to recipient or not"
+          },
+          "sendEmailToSender": {
+            "type": "boolean",
+            "description": "Should an email be sent out to sender or not"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InitiateShareModel": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileModel"
+            },
+            "description": "This would be full of CaRFS file paths when working with GLShare front end\nFrom TransPort this should not be included",
+            "nullable": true
+          },
+          "storageLocation": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "Storage location for files of the share",
+            "nullable": true
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InitiateShareRecipient"
+            },
+            "description": "Users to share with",
+            "nullable": true
+          },
+          "shareKey": {
+            "type": "string",
+            "description": "For TransPort, using the CaRFS share token",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Share notes",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "description": "Source can be 'glshare', 'glsharemobile', 'transport', or 'patents', default: glshare",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean",
+            "description": "Indicating public share, anonymous link"
+          },
+          "expirationDays": {
+            "type": "integer",
+            "description": "Number of days to expire the link in\nIf not passed, defaults to 30 days",
+            "format": "int32"
+          },
+          "projectAInformation": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectAInfoModel"
+            },
+            "description": "ProjectA Job Number and LP",
+            "nullable": true
+          },
+          "patentEmailData": {
+            "$ref": "#/components/schemas/PatentEmailDataModel"
+          },
+          "isRestrictedToOwner": {
+            "type": "boolean",
+            "description": "Sets to true if the file is restricted only to owner"
+          },
+          "sendEmailToSender": {
+            "type": "boolean",
+            "description": "Choice for sending emails to sender"
+          },
+          "sendEmailToRecipients": {
+            "type": "boolean",
+            "description": "Choice for sending emails to recipients"
+          },
+          "canAllRecipientsGrantAccess": {
+            "type": "boolean"
+          },
+          "copiedFromShareLinkId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "title": {
+            "maxLength": 250,
+            "type": "string",
+            "description": "Sets optional share title",
+            "nullable": true
+          },
+          "carfsHostUrl": {
+            "type": "string",
+            "description": "For TP / Patents to provide the host CaRFS host URL that they uploaded their files to",
+            "nullable": true
+          },
+          "isEmailNotificationsEnabled": {
+            "type": "boolean",
+            "description": "Choice for fully disabling email notifications, without having to specify SendEmailToSender or SendEmailToRecipients"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InitiateShareRecipient": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Recipient email address",
+            "nullable": true
+          },
+          "userId": {
+            "type": "integer",
+            "description": "Reference user by Id",
+            "format": "int32",
+            "nullable": true
+          },
+          "sendEmail": {
+            "type": "boolean",
+            "description": "Send email to this recipient flag"
+          },
+          "userWhoAddedRecipient": {
+            "type": "string",
+            "description": "Username of user who added this recipient",
+            "nullable": true
+          },
+          "canGrantOthersAccess": {
+            "type": "boolean",
+            "description": "Can the user grant others Share access"
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Recipient's full name - only used if source is transport",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LogModel": {
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "logType": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PatentEmailDataModel": {
+        "type": "object",
+        "properties": {
+          "clientReferenceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "appNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "organizationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "officialDeadline": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestor": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestType": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "isAutomatic": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "ProjectAInfoModel": {
+        "type": "object",
+        "properties": {
+          "projectAJobNumber": {
+            "type": "string",
+            "description": "Project A Job Number",
+            "nullable": true
+          },
+          "lp": {
+            "type": "string",
+            "description": "ProjectA LP",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecipientQueryModel": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "nullable": true
+          },
+          "organization": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegistrationLinkRequest": {
+        "required": [
+          "pricingTypeId",
+          "theme"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The user's email to create the account with",
+            "nullable": true,
+            "example": "\n            example@example.com\n            "
+          },
+          "theme": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string",
+            "description": "Theme of the site the user is coming from/going to, defaults to share",
+            "example": "\n            s\n            "
+          },
+          "pricingTypeId": {
+            "type": "integer",
+            "description": "The id of the pricing tier type the user is trying to become",
+            "format": "int32",
+            "example": 1
+          },
+          "shareLinkId": {
+            "maxLength": 100,
+            "type": "string",
+            "description": "Optional share link to be attached to registration link",
+            "nullable": true,
+            "example": "\n            3fa85f64-5717-4562-b3fc-2c963f66afa6\n            "
+          },
+          "returnUrl": {
+            "maxLength": 2080,
+            "type": "string",
+            "description": "Optional Url to return user after register",
+            "nullable": true,
+            "example": "\n            /download/id\n            "
+          }
+        },
+        "additionalProperties": false
+      },
+      "RequestAccessForYourselfModel": {
+        "required": [
+          "shareLinkId"
+        ],
+        "type": "object",
+        "properties": {
+          "shareLinkId": {
+            "type": "string",
+            "description": "The id of the Share user is requesting access to",
+            "format": "uuid",
+            "example": "\n            3fa85f64-5717-4562-b3fc-2c963f66afa6\n            "
+          },
+          "message": {
+            "maxLength": 450,
+            "type": "string",
+            "description": "The attached message for the approval request",
+            "nullable": true,
+            "example": "\n            Please give me access\n            "
+          }
+        },
+        "additionalProperties": false
+      },
+      "SearchReceivedShareFilterModel": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "nullable": true
+          },
+          "expirationRange": {
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "An array of expiration date range in UTC, first element being the beginning of date range, second element being the end of the date range",
+            "nullable": true
+          },
+          "createDateRange": {
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "An array of create date range in UTC, first element being the beginning of date range, second element being the end of the date range",
+            "nullable": true
+          },
+          "fileCountRange": {
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SearchShareFilterModel": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "nullable": true
+          },
+          "access": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "expirationRange": {
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "An array of expiration date range in UTC, first element being the beginning of date range, second element being the end of the date range",
+            "nullable": true
+          },
+          "createDateRange": {
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "An array of create date range in UTC, first element being the beginning of date range, second element being the end of the date range",
+            "nullable": true
+          },
+          "fileCountRange": {
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ServiceAccountRegistrationLinkRequest": {
+        "required": [
+          "email",
+          "pricingTypeId",
+          "shareLinkId",
+          "theme"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "minLength": 1,
+            "type": "string",
+            "description": "The user's email to create a registration link for",
+            "example": "\n            example@example.com\n            "
+          },
+          "theme": {
+            "maxLength": 1,
+            "minLength": 0,
+            "type": "string",
+            "description": "Theme of the site the user is coming from/going to, defaults to patents",
+            "example": "\n            p\n            "
+          },
+          "pricingTypeId": {
+            "type": "integer",
+            "description": "The id of the pricing tier type the user should be registered as",
+            "format": "int32",
+            "example": 1
+          },
+          "shareLinkId": {
+            "type": "string",
+            "description": "Id of the Share you need to create a registration link for",
+            "format": "uuid",
+            "example": "\n            3fa85f64-5717-4562-b3fc-2c963f66afa6\n            "
+          }
+        },
+        "additionalProperties": false
+      },
+      "ShareAccessStatusModel": {
+        "required": [
+          "statusId"
+        ],
+        "type": "object",
+        "properties": {
+          "statusId": {
+            "enum": [
+              1,
+              2,
+              3
+            ],
+            "type": "integer",
+            "description": "The statusId that the request is being set to",
+            "format": "int32",
+            "example": 2
+          }
+        },
+        "additionalProperties": false
+      },
+      "ShareActivityModel": {
+        "required": [
+          "actionId"
+        ],
+        "type": "object",
+        "properties": {
+          "actionId": {
+            "type": "integer",
+            "description": "Id of the action",
+            "format": "int32",
+            "example": 4
+          },
+          "value": {
+            "type": "string",
+            "description": "File name for file specific actions",
+            "nullable": true,
+            "example": "LoremIpsum.txt"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubscriptionProduct": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubscriptionTier": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "pricingModel": {
+            "type": "string",
+            "nullable": true
+          },
+          "product": {
+            "$ref": "#/components/schemas/SubscriptionProduct"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubscriptionUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "identityServerUserId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubscriptionWebhookModel": {
+        "type": "object",
+        "properties": {
+          "externalOrderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "routingKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/SubscriptionUser"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/SubscriptionTier"
+          },
+          "subtotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalDiscount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalDuty": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalFees": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalImporterTax": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalShipping": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalTax": {
+            "type": "number",
+            "format": "double"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "destinationUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "expirationDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isTrial": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateBlacklistOrgsModel": {
+        "type": "object",
+        "properties": {
+          "organizationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDelete": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateExternalUserPricingModel": {
+        "required": [
+          "pricingTypeId",
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "Id of user whose pricing information to update",
+            "format": "int32",
+            "example": 1
+          },
+          "pricingTypeId": {
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "type": "integer",
+            "description": "Id of pricing type to set for user",
+            "format": "int32",
+            "example": 1
+          },
+          "enableTrial": {
+            "type": "boolean",
+            "description": "Set a trial for the user or not",
+            "example": true
+          },
+          "trialEndDate": {
+            "type": "string",
+            "description": "What is the end date for the trial",
+            "format": "date-time",
+            "example": "1/25/2024"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateInternalUserPricingModel": {
+        "required": [
+          "pricingTypeId",
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "Id of user whose pricing information to update",
+            "format": "int32",
+            "example": 1
+          },
+          "pricingTypeId": {
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "type": "integer",
+            "description": "Id of pricing type to set for user",
+            "format": "int32",
+            "example": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateShareModel": {
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "newRecipients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmailRecipient"
+            },
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "isRestrictedToOwner": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "projectAInformation": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectAInfoModel"
+            },
+            "nullable": true
+          },
+          "canAllRecipientsGrantAccess": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "approvalKeysToApprove": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "approvalKeysToDeny": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsageReportModel": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "userFilter": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Users to exclude",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserPreferenceRequestModel": {
+        "required": [
+          "keyId",
+          "valueId"
+        ],
+        "type": "object",
+        "properties": {
+          "keyId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "valueId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserRegistrationModel": {
+        "required": [
+          "displayName",
+          "email",
+          "firstName",
+          "lastName",
+          "organization",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "lastName": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "email": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "organization": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "displayName": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "oauth2",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://sso-qa.transperfect.com/connect/authorize",
+            "scopes": {
+              "GLShareApi": "GLShareApi"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
+}

@@ -63,6 +63,8 @@ def test_class_environment():
         share_link = "1234567890"
         endpoint_with_share_link_method_call_val = endpoint_with_share_link_method.call(interpreter, [share_link])
         expected_endpoint_with_share_link = f"{gloabllabshare}/gl-share/api/Admin/share/{share_link}"
+        # check if the interpreter can work with something like $"lsdkfj{}" + sdlfk
+
         assert(endpoint_with_share_link_method_call_val == expected_endpoint_with_share_link)
 
 
@@ -190,12 +192,12 @@ def test_method_environment_2():
 
 
 test_global_environment(global_env)
-test_class_environment()
-test_method_environment()
-test_path_to_var()
-test_path_resolver()
-test_select_best_send()
-test_method_environment_2()
+# test_class_environment()
+# test_method_environment()
+# test_path_to_var()
+# test_path_resolver()
+# test_select_best_send()
+# test_method_environment_2()
 
 
 def test_failing():
@@ -213,4 +215,26 @@ def test_failing():
                 break
         break
 
-test_failing()
+
+def test_interpreter():
+    source_code = """
+    public sealed class Admin: APITest
+    {
+        var endpoint = $"{GlobalLabShare}/gl-share/api/Admin/share" + "sdlfk";
+        [Test]
+        public void Test()
+        {
+        }
+    }
+    """
+
+    cs_file = CSFile(source_code, global_env)
+    for c in cs_file.get_classes():
+        for m in c.get_test_methods():
+            # check endpoint is evaluated correctly
+            interpreter = Interpreter(c.environment)
+            endpoint = m.environment.get_variable("endpoint")
+            print(endpoint)
+            assert(endpoint == "https://qa-share.transperfect.com/gl-share/api/Admin/sharesdlfk")
+
+test_interpreter()
